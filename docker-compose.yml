@@ -1,0 +1,62 @@
+# =============================================================================
+# Samaryn — AI Security Gateway
+# Docker Compose for local development and deployment
+#
+# Usage:
+#   docker compose up --build
+#   docker compose up -d          # detached mode
+#   docker compose logs -f        # follow logs
+#   docker compose down           # stop all services
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Rust Gateway — The main entry point for all AI traffic
+  # ---------------------------------------------------------------------------
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: samaryn-gateway
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config:/app/config:ro
+      - gateway-logs:/app/logs
+    environment:
+      - SAMARYN__ML_SERVICE__URL=http://ml-service:8000
+      - SAMARYN__SERVER__HOST=0.0.0.0
+      - SAMARYN__SERVER__PORT=8080
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - RUST_LOG=info,tower_http=debug
+    depends_on:
+      ml-service:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Python ML Service — Security scanning (injection detection + PII masking)
+  # ---------------------------------------------------------------------------
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: samaryn-ml-service
+    expose:
+      - "8000"
+    environment:
+      - ML_SERVICE_LOG_LEVEL=info
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+
+volumes:
+  gateway-logs:
+    driver: local

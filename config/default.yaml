@@ -1,0 +1,98 @@
+# =============================================================================
+# Samaryn Gateway — Default Configuration
+# =============================================================================
+# Override any value with environment variables using the SAMARYN__ prefix
+# and __ as separator. Example: SAMARYN__SERVER__PORT=9090
+# =============================================================================
+
+server:
+  host: "0.0.0.0"
+  port: 8080
+
+# -----------------------------------------------------------------------------
+# LLM Provider Configuration
+# API keys can reference environment variables: ${ENV_VAR_NAME}
+# -----------------------------------------------------------------------------
+providers:
+  - name: openai
+    base_url: "https://api.openai.com"
+    api_key: "${OPENAI_API_KEY}"
+    models:
+      - "gpt-4o"
+      - "gpt-4o-mini"
+      - "gpt-4-turbo"
+      - "gpt-3.5-turbo"
+
+  - name: anthropic
+    base_url: "https://api.anthropic.com"
+    api_key: "${ANTHROPIC_API_KEY}"
+    models:
+      - "claude-sonnet-4-20250514"
+      - "claude-3-5-sonnet-20241022"
+      - "claude-3-haiku-20240307"
+
+  - name: gemini
+    base_url: "https://generativelanguage.googleapis.com"
+    api_key: "${GEMINI_API_KEY}"
+    models:
+      - "gemini-2.0-flash"
+      - "gemini-1.5-pro"
+
+  - name: openrouter
+    base_url: "https://openrouter.ai/api"
+    api_key: "${OPENROUTER_API_KEY}"
+    models:
+      - "openrouter/*"
+
+  - name: ollama
+    base_url: "http://localhost:11434"
+    api_key: ""
+    models:
+      - "llama3"
+      - "mistral"
+      - "codellama"
+      - "phi3"
+
+# -----------------------------------------------------------------------------
+# ML Security Service
+# -----------------------------------------------------------------------------
+ml_service:
+  url: "http://ml-service:8000"
+  timeout_secs: 5
+  # fail_open: true  → pass through if ML service is unreachable
+  # fail_open: false → block requests if ML service is unreachable
+  fail_open: true
+
+# -----------------------------------------------------------------------------
+# Security Configuration
+# -----------------------------------------------------------------------------
+security:
+  pii_masking: true
+  injection_detection: true
+  # action: block  → reject request entirely
+  # action: redact → mask PII and forward
+  # action: warn   → log warning but forward unmodified
+  action: "redact"
+
+  rules:
+    - block:
+        contains:
+          - "ignore previous instructions"
+          - "ignore all previous"
+          - "disregard your instructions"
+          - "disregard prior rules"
+
+    - redact:
+        type: api_key
+    - redact:
+        type: email
+    - redact:
+        type: credit_card
+
+# -----------------------------------------------------------------------------
+# Logging
+# -----------------------------------------------------------------------------
+logging:
+  format: "json"
+  level: "info"
+  audit_file: "audit.jsonl"

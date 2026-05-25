@@ -1,0 +1,21 @@
+.git
+.gitignore
+*.md
+LICENSE
+.env
+.env.*
+.vscode
+.idea
+
+# Rust build artifacts
+gateway/target
+
+# Python caches
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Docker
+docker-compose*.yml
