@@ -11,7 +11,9 @@
   <a href="#quick-start">Quick Start</a> •
   <a href="#how-it-works">How It Works</a> •
   <a href="#configuration">Configuration</a> •
-  <a href="#architecture">Architecture</a>
+  <a href="#architecture">Architecture</a> •
+  <a href="#contributing">Contributing</a> •
+  <a href="#roadmap">Roadmap</a>
 </p>
 
 ---
@@ -58,7 +60,7 @@ No other code changes required. Samaryn is fully OpenAI-compatible.
 ### 1. Clone and configure
 
 ```bash
-git clone https://github.com/your-org/samaryn.git
+git clone https://github.com/Urdemonlord/samaryn.git
 cd samaryn
 cp .env.example .env
 # Edit .env with your LLM provider API keys
@@ -190,7 +192,83 @@ uvicorn app.main:app --reload --port 8000
 
 ---
 
+## Contributing
+
+We welcome contributions! Here's how to get started:
+
+### Getting Started
+
+1. **Fork** the repository on GitHub
+2. **Clone** your fork:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/samaryn.git
+   cd samaryn
+   ```
+3. **Create a branch** for your feature:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+### Development Setup
+
+**Gateway (Rust):**
+```bash
+cd gateway
+cargo build
+cargo run
+```
+
+**ML Service (Python):**
+```bash
+cd ml-service
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+### Making Changes
+
+1. Write your code following the existing style
+2. Add tests if applicable
+3. Update [CHANGELOG.md](CHANGELOG.md) with your changes
+4. Commit with clear messages:
+   ```bash
+   git commit -m "feat: add X feature" 
+   git commit -m "fix: resolve Y issue"
+   ```
+
+### Submit a Pull Request
+
+1. **Push** to your fork:
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+2. **Create a Pull Request** on GitHub
+3. **Describe** your changes and reference any related issues
+4. Wait for review and address feedback
+
+### Code Guidelines
+
+- **Rust:** Follow [rustfmt](https://github.com/rust-lang/rustfmt) conventions
+- **Python:** Follow [PEP 8](https://pep8.org/) and use `black` for formatting
+- Keep functions small and focused
+- Add docstrings/comments for complex logic
+- Write tests for new features
+
+### Reporting Issues
+
+Found a bug? Please open an [Issue](https://github.com/Urdemonlord/samaryn/issues) with:
+- Clear description of the problem
+- Steps to reproduce
+- Expected vs actual behavior
+- Environment details (OS, Docker version, etc.)
+
+---
+
 ## Roadmap
+
+### ✅ Released (v0.1.0)
 
 - [x] OpenAI-compatible proxy gateway
 - [x] PII masking (email, phone, API keys, JWT, credit cards)
@@ -198,11 +276,22 @@ uvicorn app.main:app --reload --port 8000
 - [x] Audit logging (JSONL)
 - [x] Multi-provider routing
 - [x] Docker Compose deployment
-- [ ] Web dashboard
-- [ ] Analytics & usage metrics
+
+### 🚀 Upcoming (v0.2.0)
+
+- [ ] Web dashboard for monitoring & logs
+- [ ] Analytics & usage metrics per model/user
+- [ ] Real-time stream filtering
+- [ ] Custom security rule builder UI
+
+### 🎯 Future Releases (v0.3.0+)
+
 - [ ] ML-based injection detection (IndoBERT)
-- [ ] Realtime stream filtering
 - [ ] Enterprise policy engine
+- [ ] Role-based access control (RBAC)
+- [ ] Advanced threat detection
+- [ ] Kubernetes support
+- [ ] Rate limiting & quota management
 
 ---
 
