@@ -18,6 +18,22 @@ use crate::proxy::streaming;
 use crate::security::rules::RuleResult;
 use crate::state::AppState;
 
+fn normalize_model_for_provider(provider_name: &str, model: &str) -> String {
+    if provider_name == "openrouter" {
+        if model == "openrouter/free" || model.ends_with(":free") {
+            return model.to_string();
+        }
+
+        return "openrouter/free".to_string();
+    }
+
+    if model.contains('/') {
+        return model.to_string();
+    }
+
+    model.to_string()
+}
+
 /// Main chat completions proxy handler.
 ///
 /// Pipeline:
@@ -135,6 +151,46 @@ pub async fn chat_completions(
         {
             Ok(scan_result) => {
                 if !scan_result.is_safe {
+                    if let Some(classification) = &scan_result.classification {
+                        if classification.action == "escalate" {
+                            warn!(
+                                request_id = %request_id,
+                                label = %classification.label,
+                                confidence = classification.confidence,
+                                source = %classification.source,
+                                "ML service flagged out-of-domain prompt"
+                            );
+
+                            return Err(GatewayError::SecurityViolation {
+                                reason: "Out-of-domain prompt requires escalation"
+                                    .to_string(),
+                                threats: vec!["out_of_domain".to_string()],
+                            });
+                        }
+
+                        if classification.action == "block" {
+                            let threats = scan_result
+                                .injection
+                                .as_ref()
+                                .map(|injection| injection.threats.clone())
+                                .filter(|threats| !threats.is_empty())
+                                .unwrap_or_else(|| vec!["prompt_injection".to_string()]);
+                            warn!(
+                                request_id = %request_id,
+                                threats = ?threats,
+                                label = %classification.label,
+                                confidence = classification.confidence,
+                                "ML service detected prompt injection"
+                            );
+
+                            return Err(GatewayError::SecurityViolation {
+                                reason: "Prompt injection detected by ML scanner"
+                                    .to_string(),
+                                threats,
+                            });
+                        }
+                    }
+
                     if let Some(injection) = &scan_result.injection {
                         if injection.detected {
                             warn!(
@@ -143,14 +199,6 @@ pub async fn chat_completions(
                                 severity = ?injection.severity,
                                 "ML service detected prompt injection"
                             );
-
-                            if state.config.security.action == "block" {
-                                return Err(GatewayError::SecurityViolation {
-                                    reason: "Prompt injection detected by ML scanner"
-                                        .to_string(),
-                                    threats: injection.threats.clone(),
-                                });
-                            }
                         }
                     }
                 }
@@ -170,12 +218,18 @@ pub async fn chat_completions(
     }
 
     // Step 5: Resolve upstream provider
-    let (base_url, api_key) = state.provider_router.resolve(&model)?;
+    let provider = state.provider_router.resolve(&model)?;
+    let upstream_model = normalize_model_for_provider(&provider.name, &model);
+    if upstream_model != model {
+        payload.model = upstream_model.clone();
+    }
 
-    let upstream_url = format!("{}/chat/completions", base_url);
+    let upstream_url = format!("{}/chat/completions", provider.base_url);
 
     info!(
         request_id = %request_id,
+        provider = %provider.name,
+        upstream_model = %upstream_model,
         upstream_url = %upstream_url,
         "Forwarding request to upstream provider"
     );
@@ -184,7 +238,7 @@ pub async fn chat_completions(
     let upstream_response = state
         .http_client
         .post(&upstream_url)
-        .header("Authorization", format!("Bearer {}", api_key))
+        .header("Authorization", format!("Bearer {}", provider.api_key))
         .header("Content-Type", "application/json")
         .json(&payload)
         .send()

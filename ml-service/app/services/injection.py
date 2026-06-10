@@ -3,22 +3,49 @@ import unicodedata
 import base64
 import logging
 
+from ..core.config import settings
+from .indobert_runtime import IndoBertOnnxClassifier
+
 logger = logging.getLogger(__name__)
 
 
 class PromptInjectionDetector:
-    """Rule-based prompt injection detection engine.
+    """Hybrid prompt injection detector for Samaryn.
 
-    Detects common prompt injection patterns including:
-    - Instruction override attempts
-    - System prompt reveal attempts
-    - Persona/role override attempts
-    - Hidden unicode attacks
-    - Base64/hex encoded attacks
-    - Malicious tool/command requests
+    Fast regex rules handle explicit override/exfiltration attempts.
+    IndoBERT ONNX handles the three-way label:
+    SAFE / PROMPT_INJECTION / OUT_OF_DOMAIN.
     """
 
     def __init__(self):
+        self.classifier = IndoBertOnnxClassifier(settings.model_dir)
+        self.ood_patterns = {
+            "context_drift": [
+                re.compile(pattern, re.IGNORECASE)
+                for pattern in [
+                    r"(?:aku|saya)\s+mau\s+(?:pesen|pesan|order)\b.*\b(?:tapi|sebelum(?:nya)?)\b",
+                    r"(?:aku|saya)\s+mau\s+tanya\s+harga\b.*\b(?:tapi|sebelum(?:nya)?)\b",
+                    r"\bcek\s+stok\b.*\b(?:lalu|terus|sebelum(?:nya)?)\b",
+                    r"\bbantu\s+cek\s+ongkir\b.*\b(?:lalu|terus|sebelum(?:nya)?)\b",
+                    r"\btolong\s+cek\s+status\s+pesanan\b.*\b(?:lalu|terus|sebelum(?:nya)?)\b",
+                    r"\btapi\s+buat(?:kan)?\b",
+                    r"\bsebelum(?:nya)?\s+buat(?:kan)?\b",
+                    r"\bsebelum\s+itu\s+buat(?:kan)?\b",
+                    r"\bsebelum\s+jawab\s+soal\s+produk\b",
+                    r"\bsambil\s+buat(?:kan)?\s+(?:program|script|kode)\b",
+                ]
+            ],
+            "out_of_domain_request": [
+                re.compile(pattern, re.IGNORECASE)
+                for pattern in [
+                    r"\bbuat(?:kan)?\s+(?:kode|script|program|website|web|landing\s*page|html)\b",
+                    r"\b(?:tulis|bikin)\s+(?:program|script|kode|website|web)\b",
+                    r"\bklasifikasikan\s+tweet\s+ini\b",
+                    r"\brangkum\s+artikel\s+ini\b",
+                    r"\bterjemahkan\s+paragraf\b",
+                ]
+            ],
+        }
         self.patterns = {
             "ignore_instructions": {
                 "pattern": re.compile(
@@ -80,6 +107,16 @@ class PromptInjectionDetector:
                 ),
                 "severity": "medium",
                 "description": "Attempt to execute system commands",
+            },
+            "malicious_cyber_abuse": {
+                "pattern": re.compile(
+                    r"\b(?:bobol|hack|hacking|retas|meretas|jebol|bypass|phishing|ddos|deface|exploit)\b"
+                    r"(?:[\s\w-]{0,40})"
+                    r"\b(?:web|website|situs|akun|login|server|admin|password|cookie|database)\b",
+                    re.IGNORECASE,
+                ),
+                "severity": "critical",
+                "description": "Attempt to request offensive cyber abuse",
             },
             "delimiter_attack": {
                 "pattern": re.compile(
@@ -153,11 +190,20 @@ class PromptInjectionDetector:
                 pass
         return threats
 
+    def _check_out_of_domain(self, text: str) -> tuple[str, str] | None:
+        for category, patterns in self.ood_patterns.items():
+            for pattern in patterns:
+                match = pattern.search(text)
+                if match:
+                    return category, match.group()
+        return None
+
     def scan(self, text: str) -> dict:
         """Scan text for prompt injection attempts.
 
         Returns:
-            dict with keys: detected (bool), threats (list), severity (str|None)
+            dict with keys: detected (bool), threats (list[str]),
+            severity (str|None), classification (dict)
         """
         preprocessed = self._preprocess(text)
         threats: list[dict] = []
@@ -195,10 +241,73 @@ class PromptInjectionDetector:
                 key=lambda s: severity_order.get(s, 0),
             )
 
+        if threats:
+            return {
+                "detected": True,
+                "threats": [
+                    f"{threat['pattern_name']}: {threat['matched_text']}"
+                    for threat in threats
+                ],
+                "severity": max_severity,
+                "classification": {
+                    "label": "PROMPT_INJECTION",
+                    "confidence": 0.99,
+                    "source": "rules",
+                    "action": "block",
+                    "normalized_text": preprocessed,
+                },
+            }
+
+        ood_match = self._check_out_of_domain(preprocessed)
+        if ood_match is not None:
+            matched_category, matched_pattern = ood_match
+            return {
+                "detected": False,
+                "threats": [],
+                "severity": "medium",
+                "classification": {
+                    "label": "OUT_OF_DOMAIN",
+                    "confidence": 0.98,
+                    "source": "rules",
+                    "action": "escalate",
+                    "normalized_text": preprocessed,
+                    "matched_category": matched_category,
+                    "matched_pattern": matched_pattern,
+                },
+            }
+
+        try:
+            model_result = self.classifier.predict(text)
+        except Exception as exc:
+            logger.warning("IndoBERT classifier unavailable, using safe fallback: %s", exc)
+            return {
+                "detected": False,
+                "threats": [],
+                "severity": None,
+                "classification": {
+                    "label": "SAFE",
+                    "confidence": 0.0,
+                    "source": "classifier-unavailable",
+                    "action": "allow",
+                    "normalized_text": preprocessed,
+                },
+            }
+
+        threat_labels: list[str] = []
+        severity: str | None = None
+        detected = False
+        if model_result.label == "PROMPT_INJECTION":
+            detected = True
+            severity = "high"
+            threat_labels = ["model_prediction:prompt_injection"]
+        elif model_result.label == "OUT_OF_DOMAIN":
+            severity = "medium"
+
         return {
-            "detected": len(threats) > 0,
-            "threats": threats,
-            "severity": max_severity,
+            "detected": detected,
+            "threats": threat_labels,
+            "severity": severity,
+            "classification": model_result.to_payload(),
         }
 
 

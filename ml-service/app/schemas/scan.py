@@ -30,24 +30,28 @@ class PiiResult(BaseModel):
     """Result of PII detection scan."""
 
     detected: bool = False
-    entities: list[PiiEntity] = []
+    entities: list[PiiEntity] = Field(default_factory=list)
     masked_text: str = ""
-
-
-class ThreatDetail(BaseModel):
-    """Details about a single detected injection threat."""
-
-    pattern_name: str
-    matched_text: str
-    severity: str = "medium"
 
 
 class InjectionResult(BaseModel):
     """Result of prompt injection scan."""
 
     detected: bool = False
-    threats: list[ThreatDetail] = []
+    threats: list[str] = Field(default_factory=list)
     severity: Optional[str] = None
+
+
+class ClassificationResult(BaseModel):
+    """Three-way classifier output used by the Samaryn gateway."""
+
+    label: str
+    confidence: float
+    source: str
+    action: str
+    normalized_text: Optional[str] = None
+    matched_category: Optional[str] = None
+    matched_pattern: Optional[str] = None
 
 
 class ScanResponse(BaseModel):
@@ -56,3 +60,4 @@ class ScanResponse(BaseModel):
     is_safe: bool = True
     injection: Optional[InjectionResult] = None
     pii: Optional[PiiResult] = None
+    classification: Optional[ClassificationResult] = None

@@ -25,6 +25,10 @@ pub struct ScanResponse {
     /// PII detection results.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pii: Option<PiiResult>,
+
+    /// Three-way classification metadata returned by the ML service.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub classification: Option<ClassificationResult>,
 }
 
 /// Results from prompt injection detection.
@@ -39,6 +43,22 @@ pub struct InjectionResult {
     /// Severity level (e.g., "low", "medium", "high", "critical").
     #[serde(skip_serializing_if = "Option::is_none")]
     pub severity: Option<String>,
+}
+
+/// Three-way classifier output returned by the ML service.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClassificationResult {
+    /// Predicted label: SAFE / PROMPT_INJECTION / OUT_OF_DOMAIN.
+    pub label: String,
+
+    /// Probability/confidence score for the predicted label.
+    pub confidence: f32,
+
+    /// Runtime source used to produce the prediction.
+    pub source: String,
+
+    /// Suggested policy action: allow / block / escalate.
+    pub action: String,
 }
 
 /// Results from PII detection.

@@ -22,13 +22,13 @@ impl ProviderRouter {
 
     /// Resolve which provider should handle a request for the given model.
     ///
-    /// Returns `(base_url, api_key)` for the matching provider.
+    /// Returns the matching provider configuration.
     ///
     /// Matching logic:
     /// 1. Check each provider's `models` list for an exact match.
     /// 2. Check each provider's `models` list for a prefix match (e.g., "gpt-" matches "gpt-4o").
     /// 3. If no match found, default to the first configured provider.
-    pub fn resolve(&self, model: &str) -> Result<(&str, &str), GatewayError> {
+    pub fn resolve(&self, model: &str) -> Result<&ProviderConfig, GatewayError> {
         if self.providers.is_empty() {
             return Err(GatewayError::Config(
                 "No providers configured".to_string(),
@@ -39,12 +39,20 @@ impl ProviderRouter {
         for provider in &self.providers {
             for supported_model in &provider.models {
                 if supported_model == model {
+                    if !provider_is_available(provider) {
+                        debug!(
+                            model = %model,
+                            provider = %provider.name,
+                            "Exact model match skipped because provider is unavailable"
+                        );
+                        continue;
+                    }
                     debug!(
                         model = %model,
                         provider = %provider.name,
                         "Exact model match found"
                     );
-                    return Ok((&provider.base_url, &provider.api_key));
+                    return Ok(provider);
                 }
             }
         }
@@ -53,26 +61,54 @@ impl ProviderRouter {
         for provider in &self.providers {
             for supported_model in &provider.models {
                 if model.starts_with(supported_model.as_str()) {
+                    if !provider_is_available(provider) {
+                        debug!(
+                            model = %model,
+                            provider = %provider.name,
+                            pattern = %supported_model,
+                            "Prefix model match skipped because provider is unavailable"
+                        );
+                        continue;
+                    }
                     debug!(
                         model = %model,
                         provider = %provider.name,
                         pattern = %supported_model,
                         "Prefix model match found"
                     );
-                    return Ok((&provider.base_url, &provider.api_key));
+                    return Ok(provider);
                 }
             }
         }
 
-        // Default to the first provider (for custom/local models)
+        // Default to the first available provider (for custom/local models)
+        if let Some(default_provider) = self.providers.iter().find(|provider| provider_is_available(provider)) {
+            debug!(
+                model = %model,
+                provider = %default_provider.name,
+                "No model match found, using first available provider"
+            );
+            return Ok(default_provider);
+        }
+
         let default_provider = &self.providers[0];
         debug!(
             model = %model,
             provider = %default_provider.name,
-            "No model match found, using default provider"
+            "No available providers found, falling back to first configured provider"
         );
-        Ok((&default_provider.base_url, &default_provider.api_key))
+        Ok(default_provider)
     }
+}
+
+fn provider_is_available(provider: &ProviderConfig) -> bool {
+    if !provider.api_key.trim().is_empty() {
+        return true;
+    }
+
+    provider.base_url.starts_with("http://localhost")
+        || provider.base_url.starts_with("http://127.0.0.1")
+        || provider.base_url.starts_with("http://ollama")
 }
 
 #[cfg(test)]
@@ -106,22 +142,22 @@ mod tests {
     #[test]
     fn test_exact_match() {
         let router = ProviderRouter::new(test_providers());
-        let (url, _) = router.resolve("gpt-4o").unwrap();
-        assert_eq!(url, "https://api.openai.com/v1");
+        let provider = router.resolve("gpt-4o").unwrap();
+        assert_eq!(provider.base_url, "https://api.openai.com/v1");
     }
 
     #[test]
     fn test_prefix_match() {
         let router = ProviderRouter::new(test_providers());
-        let (url, _) = router.resolve("claude-3-sonnet").unwrap();
-        assert_eq!(url, "https://api.anthropic.com/v1");
+        let provider = router.resolve("claude-3-sonnet").unwrap();
+        assert_eq!(provider.base_url, "https://api.anthropic.com/v1");
     }
 
     #[test]
     fn test_default_fallback() {
         let router = ProviderRouter::new(test_providers());
-        let (url, _) = router.resolve("some-unknown-model").unwrap();
-        assert_eq!(url, "https://api.openai.com/v1");
+        let provider = router.resolve("some-unknown-model").unwrap();
+        assert_eq!(provider.base_url, "https://api.openai.com/v1");
     }
 
     #[test]

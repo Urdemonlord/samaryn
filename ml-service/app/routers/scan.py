@@ -3,13 +3,13 @@ import logging
 from fastapi import APIRouter
 
 from ..schemas.scan import (
+    ClassificationResult,
     InjectionResult,
     PiiEntity,
     PiiResult,
     ScanRequest,
     ScanResponse,
     ScanType,
-    ThreatDetail,
 )
 from ..services.injection import detector as injection_detector
 from ..services.pii import detector as pii_detector
@@ -33,23 +33,22 @@ async def scan_text(request: ScanRequest) -> ScanResponse:
 
     injection_result = None
     pii_result = None
+    classification_result = None
     is_safe = True
 
     if ScanType.INJECTION in request.scan_types:
         result = injection_detector.scan(request.text)
+        classification_payload = result.get("classification")
+        if classification_payload is not None:
+            classification_result = ClassificationResult(**classification_payload)
         injection_result = InjectionResult(
             detected=result["detected"],
-            threats=[
-                ThreatDetail(
-                    pattern_name=t["pattern_name"],
-                    matched_text=t["matched_text"],
-                    severity=t.get("severity", "medium"),
-                )
-                for t in result["threats"]
-            ],
+            threats=result["threats"],
             severity=result.get("severity"),
         )
-        if result["detected"]:
+        if classification_result is not None:
+            is_safe = classification_result.action == "allow"
+        elif result["detected"]:
             is_safe = False
 
     if ScanType.PII in request.scan_types:
@@ -73,4 +72,5 @@ async def scan_text(request: ScanRequest) -> ScanResponse:
         is_safe=is_safe,
         injection=injection_result,
         pii=pii_result,
+        classification=classification_result,
     )

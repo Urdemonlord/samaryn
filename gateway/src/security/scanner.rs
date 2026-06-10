@@ -56,7 +56,7 @@ impl SecurityScanner {
             scan_types,
         };
 
-        let url = format!("{}/scan", self.ml_service_url);
+        let url = format!("{}/api/v1/scan", self.ml_service_url);
 
         info!(
             url = %url,
@@ -140,6 +140,7 @@ impl SecurityScanner {
             is_safe: true,
             injection: None,
             pii: None,
+            classification: None,
         }
     }
 }

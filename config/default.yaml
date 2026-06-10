@@ -15,7 +15,7 @@ server:
 # -----------------------------------------------------------------------------
 providers:
   - name: openai
-    base_url: "https://api.openai.com"
+    base_url: "https://api.openai.com/v1"
     api_key: "${OPENAI_API_KEY}"
     models:
       - "gpt-4o"
@@ -32,17 +32,22 @@ providers:
       - "claude-3-haiku-20240307"
 
   - name: gemini
-    base_url: "https://generativelanguage.googleapis.com"
+    base_url: "https://generativelanguage.googleapis.com/v1beta/openai"
     api_key: "${GEMINI_API_KEY}"
     models:
-      - "gemini-2.0-flash"
-      - "gemini-1.5-pro"
+      - "gemini-2.5-flash"
 
   - name: openrouter
-    base_url: "https://openrouter.ai/api"
+    base_url: "https://openrouter.ai/api/v1"
     api_key: "${OPENROUTER_API_KEY}"
     models:
-      - "openrouter/*"
+      - "gpt-"
+      - "claude-"
+      - "gemini-"
+      - "openrouter/"
+      - "openai/"
+      - "anthropic/"
+      - "google/"
 
   - name: ollama
     base_url: "http://localhost:11434"
@@ -72,7 +77,7 @@ security:
   # action: block  → reject request entirely
   # action: redact → mask PII and forward
   # action: warn   → log warning but forward unmodified
-  action: "redact"
+  action: "block"
 
   rules:
     - block:

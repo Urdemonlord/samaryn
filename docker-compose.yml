@@ -49,6 +49,7 @@ services:
       - "8000"
     environment:
       - ML_SERVICE_LOG_LEVEL=info
+      - ML_SERVICE_MODEL_DIR=/app/models/indobert-agentwa
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s

@@ -1,0 +1,12 @@
+{
+  "model_name": "indobenchmark/indobert-base-p1",
+  "train_rows": 20,
+  "val_rows": 4,
+  "max_length": 256,
+  "batch_size": 8,
+  "epochs": 3,
+  "learning_rate": 2e-05,
+  "resolved_warmup_steps": 1,
+  "status": "dry-run",
+  "note": "Dry run only. Real Trainer-based fine-tuning is implemented in this script and will run when dependencies are installed and --dry-run is omitted."
+}

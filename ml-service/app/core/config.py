@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pathlib import Path
 
 
 class Settings(BaseSettings):
@@ -13,6 +14,7 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
     log_level: str = "info"
+    model_dir: str = str(Path(__file__).resolve().parents[2] / "models" / "indobert-agentwa")
 
     model_config = {"env_prefix": "ML_SERVICE_"}
 

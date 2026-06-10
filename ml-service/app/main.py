@@ -21,6 +21,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.app_name} v{settings.version}")
     logger.info("Prompt injection detector: loaded")
     logger.info("PII detector: loaded")
+    logger.info("IndoBERT model directory: %s", settings.model_dir)
     yield
     logger.info("Shutting down ML service")
 

@@ -17,4 +17,5 @@ async def health_check():
         "service": settings.app_name,
         "version": settings.version,
         "detectors_loaded": True,
+        "model_dir": settings.model_dir,
     }

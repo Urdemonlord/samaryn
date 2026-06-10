@@ -1,5 +1,5 @@
 # ─── Stage 1: Build ───────────────────────────────────────────────────
-FROM rust:1.83-slim AS builder
+FROM rust:1.86-slim AS builder
 
 RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
 
@@ -21,7 +21,7 @@ RUN touch src/main.rs && cargo build --release
 # ─── Stage 2: Runtime ────────────────────────────────────────────────
 FROM debian:bookworm-slim
 
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates curl && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user for security
 RUN useradd -m appuser
@@ -31,9 +31,6 @@ WORKDIR /app
 
 # Copy the compiled binary
 COPY --from=builder /app/target/release/samaryn-gateway .
-
-# Copy config directory if it exists
-COPY --chown=appuser config/ config/ 2>/dev/null || true
 
 EXPOSE 8080
 

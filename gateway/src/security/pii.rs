@@ -76,7 +76,7 @@ impl PiiDetector {
     /// Uses RegexSet for efficient multi-pattern matching without
     /// extracting positions or values.
     pub fn contains_pii(&self, text: &str) -> bool {
-        self.regex_set.is_matching(text)
+        self.regex_set.is_match(text)
     }
 
     /// Detect all PII entities in the text with their types, values, and positions.
