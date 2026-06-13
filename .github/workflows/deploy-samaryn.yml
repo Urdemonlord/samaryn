@@ -1,0 +1,67 @@
+name: Deploy Samaryn VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-samaryn-production
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Build gateway image
+        run: docker build -t samaryn-src-gateway:latest ./gateway
+
+      - name: Build ML service image
+        run: docker build -t samaryn-ml-service:latest ./ml-service
+
+      - name: Package Docker images and deploy script
+        run: |
+          docker save samaryn-src-gateway:latest | gzip > samaryn-gateway-image.tar.gz
+          docker save samaryn-ml-service:latest | gzip > samaryn-ml-service-image.tar.gz
+          tar -czf samaryn-release.tgz \
+            samaryn-gateway-image.tar.gz \
+            samaryn-ml-service-image.tar.gz \
+            ops/deploy-vps.sh
+
+      - name: Start SSH agent
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SAMARYN_VPS_SSH_KEY }}
+        run: |
+          eval "$(ssh-agent -s)"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
+          mkdir -p ~/.ssh
+          install -m 600 /dev/null ~/.ssh/samaryn_deploy
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/samaryn_deploy
+          ssh-add ~/.ssh/samaryn_deploy
+
+      - name: Add VPS to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${{ secrets.SAMARYN_VPS_PORT || 22 }}" -H "${{ secrets.SAMARYN_VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Upload artifact
+        run: |
+          scp -P "${{ secrets.SAMARYN_VPS_PORT || 22 }}" \
+            samaryn-release.tgz \
+            "${{ secrets.SAMARYN_VPS_USER }}@${{ secrets.SAMARYN_VPS_HOST }}:/tmp/samaryn-release.tgz"
+
+      - name: Run remote deploy
+        run: |
+          ssh -p "${{ secrets.SAMARYN_VPS_PORT || 22 }}" \
+            "${{ secrets.SAMARYN_VPS_USER }}@${{ secrets.SAMARYN_VPS_HOST }}" \
+            'rm -rf /tmp/samaryn-bootstrap && mkdir -p /tmp/samaryn-bootstrap && tar -xzf /tmp/samaryn-release.tgz -C /tmp/samaryn-bootstrap ops/deploy-vps.sh && bash /tmp/samaryn-bootstrap/ops/deploy-vps.sh /tmp/samaryn-release.tgz'
