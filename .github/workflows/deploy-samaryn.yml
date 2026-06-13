@@ -69,13 +69,11 @@ jobs:
 
       - name: Notify Telegram
         if: always()
+        env:
+          ST: ${{ job.status }}
+          SH: ${{ github.sha }}
+          RP: ${{ github.repository }}
+          RN: ${{ github.run_id }}
+          SU: ${{ github.server_url }}
         run: |
-          STATUS='${{ job.status }}'
-          MSG="Deploy <b>$STATUS</b>%0A%0A"
-          MSG="${MSG}<b>Repo:</b> samaryn%0A"
-          MSG="${MSG}<b>Commit:</b> ${{ github.sha }}%0A"
-          MSG="${MSG}<b>Message:</b> $(echo '${{ github.event.head_commit.message || 'manual trigger' }}' | head -c 200 | sed 's/ /%20/g')%0A"
-          MSG="${MSG}<b>Run:</b> <a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\">${{ github.run_id }}</a>"
-          ssh -p "${{ secrets.SAMARYN_VPS_PORT || 22 }}" \
-            "${{ secrets.SAMARYN_VPS_USER }}@${{ secrets.SAMARYN_VPS_HOST }}" \
-            "hermes send --to telegram:-1003792052859 '$MSG'"
+          ssh -p "${{ secrets.SAMARYN_VPS_PORT || 22 }}"             "${{ secrets.SAMARYN_VPS_USER }}@${{ secrets.SAMARYN_VPS_HOST }}"             "printf '%s\n'               '[Samaryn] Deploy: $ST'               ''               'Commit: $SH'               'Run: $SU/$RP/actions/runs/$RN'             | /home/meowlabs/.local/bin/hermes send --to telegram:-1003792052859"
