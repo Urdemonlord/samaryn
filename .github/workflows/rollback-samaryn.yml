@@ -1,26 +1,27 @@
-name: Deploy Samaryn VPS
+name: Rollback Samaryn
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
-
-concurrency:
-  group: deploy-samaryn-production
-  cancel-in-progress: true
+    inputs:
+      commit:
+        description: 'Commit SHA, tag, or branch to rollback to'
+        required: true
+        type: string
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  deploy:
+  rollback:
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
     steps:
-      - name: Checkout
+      - name: Checkout target commit
         uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit }}
+          fetch-depth: 0
 
       - name: Build gateway image
         run: docker build -t samaryn-src-gateway:latest ./gateway
@@ -28,7 +29,7 @@ jobs:
       - name: Build ML service image
         run: docker build -t samaryn-ml-service:latest ./ml-service
 
-      - name: Package Docker images and deploy script
+      - name: Package Docker images
         run: |
           docker save samaryn-src-gateway:latest | gzip > samaryn-gateway-image.tar.gz
           docker save samaryn-ml-service:latest | gzip > samaryn-ml-service-image.tar.gz
@@ -71,10 +72,9 @@ jobs:
         if: always()
         run: |
           STATUS='${{ job.status }}'
-          MSG="Deploy <b>$STATUS</b>%0A%0A"
+          MSG="Rollback <b>$STATUS</b>%0A%0A"
           MSG="${MSG}<b>Repo:</b> samaryn%0A"
-          MSG="${MSG}<b>Commit:</b> ${{ github.sha }}%0A"
-          MSG="${MSG}<b>Message:</b> $(echo '${{ github.event.head_commit.message || 'manual trigger' }}' | head -c 200 | sed 's/ /%20/g')%0A"
+          MSG="${MSG}<b>Commit:</b> ${{ inputs.commit }}%0A"
           MSG="${MSG}<b>Run:</b> <a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\">${{ github.run_id }}</a>"
           ssh -p "${{ secrets.SAMARYN_VPS_PORT || 22 }}" \
             "${{ secrets.SAMARYN_VPS_USER }}@${{ secrets.SAMARYN_VPS_HOST }}" \
