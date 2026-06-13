@@ -97,6 +97,7 @@ async fn main() {
     let x_request_id = HeaderName::from_static("x-request-id");
 
     let app = Router::new()
+        .route("/", get(routes::landing::landing_page))
         // API routes
         .route(
             "/v1/chat/completions",
@@ -163,7 +164,7 @@ async fn fallback_handler() -> (axum::http::StatusCode, Json<serde_json::Value>)
         axum::http::StatusCode::NOT_FOUND,
         Json(serde_json::json!({
             "error": {
-                "message": "Not found. Available endpoints: GET /demo, POST /v1/chat/completions, GET /health",
+                "message": "Not found. Available endpoints: GET /, GET /demo, POST /v1/chat/completions, GET /health",
                 "type": "not_found_error",
                 "code": "404"
             }

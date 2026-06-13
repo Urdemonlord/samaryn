@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Samaryn • AI Security Gateway</title>
+    <meta
+      name="description"
+      content="Samaryn melindungi traffic LLM dengan prompt injection detection, PII masking, dan gateway OpenAI-compatible yang siap dipakai di production."
+    />
+    <style>
+      :root {
+        --bg: #08111f;
+        --bg-soft: #0d1829;
+        --panel: rgba(15, 23, 42, 0.82);
+        --panel-strong: #0f1b2e;
+        --panel-light: rgba(18, 30, 50, 0.64);
+        --line: rgba(148, 163, 184, 0.18);
+        --line-strong: rgba(56, 189, 248, 0.32);
+        --text: #f8fafc;
+        --muted: #a8b3c7;
+        --subtle: #64748b;
+        --accent: #22c55e;
+        --accent-strong: #16a34a;
+        --accent-soft: rgba(34, 197, 94, 0.14);
+        --cyan: #38bdf8;
+        --cyan-soft: rgba(56, 189, 248, 0.12);
+        --shadow: 0 28px 80px rgba(2, 6, 23, 0.42);
+        --radius-xl: 28px;
+        --radius-lg: 20px;
+        --radius-md: 14px;
+        --radius-sm: 10px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top right, rgba(34, 197, 94, 0.12), transparent 24%),
+          radial-gradient(circle at top left, rgba(56, 189, 248, 0.1), transparent 30%),
+          linear-gradient(180deg, #07101c 0%, #08111f 55%, #0a1422 100%);
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 44px 44px;
+        mask-image: radial-gradient(circle at center, black, transparent 88%);
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      code,
+      pre {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      }
+
+      .shell {
+        width: min(1200px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        backdrop-filter: blur(14px);
+        background: rgba(8, 17, 31, 0.78);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+      }
+
+      .topbar-inner {
+        min-height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .brand-mark {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        color: var(--accent);
+        background: linear-gradient(180deg, rgba(34, 197, 94, 0.16), rgba(56, 189, 248, 0.12));
+        border: 1px solid rgba(34, 197, 94, 0.22);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        font-size: 1rem;
+      }
+
+      .brand-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .brand-copy strong {
+        font-size: 1rem;
+      }
+
+      .brand-copy span {
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .nav-link,
+      .button,
+      .button-ghost {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 16px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        font-weight: 600;
+        transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
+      }
+
+      .nav-link {
+        color: var(--muted);
+      }
+
+      .nav-link:hover,
+      .button:hover,
+      .button-ghost:hover {
+        transform: translateY(-1px);
+      }
+
+      .nav-link:hover {
+        color: var(--text);
+      }
+
+      .button {
+        background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+        color: #041109;
+        box-shadow: 0 14px 30px rgba(34, 197, 94, 0.24);
+      }
+
+      .button-ghost {
+        border-color: rgba(56, 189, 248, 0.24);
+        background: rgba(56, 189, 248, 0.08);
+        color: var(--text);
+      }
+
+      .hero {
+        padding: 56px 0 32px;
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+        gap: 28px;
+        align-items: center;
+      }
+
+      .hero-copy {
+        padding-right: 10px;
+      }
+
+      .hero-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(34, 197, 94, 0.08);
+        border: 1px solid rgba(34, 197, 94, 0.18);
+        color: #c8f6d8;
+        font-size: 0.92rem;
+        margin-bottom: 20px;
+      }
+
+      .hero-kicker::before {
+        content: "";
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.12);
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      .hero-copy h1 {
+        font-size: clamp(2.8rem, 7vw, 5.4rem);
+        line-height: 0.94;
+        letter-spacing: -0.06em;
+        max-width: 10ch;
+      }
+
+      .hero-copy p {
+        margin-top: 18px;
+        max-width: 58ch;
+        color: var(--muted);
+        font-size: 1.05rem;
+        line-height: 1.68;
+      }
+
+      .hero-actions {
+        margin-top: 28px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .hero-points {
+        margin-top: 24px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .hero-points span {
+        display: inline-flex;
+        align-items: center;
+        min-height: 38px;
+        padding: 0 14px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.68);
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        color: #d7deea;
+        font-size: 0.92rem;
+      }
+
+      .hero-visual {
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(11, 18, 32, 0.92));
+        border: 1px solid var(--line);
+        border-radius: var(--radius-xl);
+        padding: 18px;
+        box-shadow: var(--shadow);
+      }
+
+      .visual-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+
+      .visual-title {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .visual-title strong {
+        font-size: 1.02rem;
+      }
+
+      .visual-title span {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .status-chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 0 12px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        border: 1px solid rgba(34, 197, 94, 0.2);
+        color: #c8f6d8;
+        font-size: 0.86rem;
+      }
+
+      .iframe-shell {
+        overflow: hidden;
+        border-radius: 20px;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        background: #0a1422;
+      }
+
+      .iframe-shell iframe {
+        display: block;
+        width: 100%;
+        height: 460px;
+        border: 0;
+        background: #0a1422;
+      }
+
+      .metrics {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .metric {
+        padding: 16px;
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(148, 163, 184, 0.1);
+      }
+
+      .metric strong {
+        display: block;
+        font-size: 1.1rem;
+        margin-bottom: 6px;
+      }
+
+      .metric span {
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.45;
+      }
+
+      section {
+        padding: 28px 0;
+      }
+
+      .section-head {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 22px;
+      }
+
+      .section-head h2 {
+        font-size: clamp(2rem, 4.4vw, 3.2rem);
+        line-height: 1;
+        letter-spacing: -0.05em;
+        max-width: 12ch;
+      }
+
+      .section-head p {
+        max-width: 60ch;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .feature {
+        padding: 22px;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.78), rgba(10, 18, 34, 0.9));
+        box-shadow: var(--shadow);
+      }
+
+      .feature h3 {
+        font-size: 1.22rem;
+        margin-bottom: 12px;
+      }
+
+      .feature p {
+        color: var(--muted);
+        line-height: 1.68;
+        margin-bottom: 16px;
+      }
+
+      .feature ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 10px;
+      }
+
+      .feature li {
+        padding-left: 16px;
+        position: relative;
+        color: #d7deea;
+        line-height: 1.55;
+      }
+
+      .feature li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0.65em;
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: var(--accent);
+      }
+
+      .feature.large {
+        grid-column: span 7;
+      }
+
+      .feature.small {
+        grid-column: span 5;
+      }
+
+      .flow-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .flow-step {
+        padding: 20px;
+        border-radius: var(--radius-lg);
+        background: rgba(15, 23, 42, 0.72);
+        border: 1px solid var(--line);
+      }
+
+      .step-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        margin-bottom: 16px;
+        border-radius: 12px;
+        background: rgba(56, 189, 248, 0.12);
+        color: var(--cyan);
+        font-weight: 700;
+      }
+
+      .flow-step h3 {
+        font-size: 1.06rem;
+        margin-bottom: 8px;
+      }
+
+      .flow-step p {
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .roadmap-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .roadmap-card {
+        padding: 20px;
+        border-radius: var(--radius-lg);
+        background: rgba(15, 23, 42, 0.72);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+      }
+
+      .roadmap-card strong {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 0 12px;
+        border-radius: 999px;
+        background: rgba(56, 189, 248, 0.1);
+        color: #d8efff;
+        margin-bottom: 14px;
+      }
+
+      .roadmap-card h3 {
+        font-size: 1.04rem;
+        margin-bottom: 10px;
+      }
+
+      .roadmap-card ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 10px;
+      }
+
+      .roadmap-card li {
+        color: var(--muted);
+        line-height: 1.58;
+        padding-left: 16px;
+        position: relative;
+      }
+
+      .roadmap-card li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0.62em;
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: var(--accent);
+      }
+
+      .ops-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+        gap: 18px;
+      }
+
+      .code-card,
+      .summary-card,
+      .cta-band {
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.8), rgba(10, 18, 34, 0.92));
+        box-shadow: var(--shadow);
+      }
+
+      .code-card {
+        padding: 22px;
+      }
+
+      .code-card pre {
+        margin: 0;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        line-height: 1.7;
+        color: #dff7e6;
+      }
+
+      .summary-card {
+        padding: 22px;
+        display: grid;
+        gap: 16px;
+      }
+
+      .summary-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .summary-item {
+        padding: 14px 16px;
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(148, 163, 184, 0.08);
+      }
+
+      .summary-item strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 0.98rem;
+      }
+
+      .summary-item span {
+        color: var(--muted);
+        line-height: 1.55;
+        font-size: 0.92rem;
+      }
+
+      .cta-band {
+        margin-top: 18px;
+        padding: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .cta-band p {
+        color: var(--muted);
+        max-width: 54ch;
+        line-height: 1.65;
+      }
+
+      footer {
+        padding: 20px 0 40px;
+        color: var(--subtle);
+        font-size: 0.92rem;
+      }
+
+      .footer-line {
+        padding-top: 22px;
+        border-top: 1px solid rgba(148, 163, 184, 0.12);
+      }
+
+      @media (max-width: 1080px) {
+        .hero-grid,
+        .ops-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-copy {
+          padding-right: 0;
+        }
+
+        .feature.large,
+        .feature.small {
+          grid-column: span 12;
+        }
+
+        .flow-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 720px) {
+        .topbar-inner {
+          align-items: flex-start;
+          flex-direction: column;
+          padding: 14px 0;
+        }
+
+        .nav-links {
+          width: 100%;
+        }
+
+        .nav-link,
+        .button,
+        .button-ghost {
+          width: 100%;
+        }
+
+        .hero {
+          padding-top: 34px;
+        }
+
+        .hero-copy h1,
+        .section-head h2 {
+          max-width: none;
+        }
+
+        .hero-actions,
+        .hero-points {
+          flex-direction: column;
+        }
+
+        .hero-points span,
+        .button,
+        .button-ghost {
+          width: 100%;
+        }
+
+        .metrics,
+        .flow-grid,
+        .roadmap-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .iframe-shell iframe {
+          height: 360px;
+        }
+
+        .cta-band {
+          align-items: stretch;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="shell topbar-inner">
+        <a class="brand" href="#top">
+          <span class="brand-mark">S</span>
+          <span class="brand-copy">
+            <strong>Samaryn</strong>
+            <span>AI Security Gateway</span>
+          </span>
+        </a>
+        <nav class="nav-links" aria-label="Navigasi utama">
+          <a class="nav-link" href="#fitur">Fitur</a>
+          <a class="nav-link" href="#alur">Alur</a>
+          <a class="nav-link" href="#roadmap">Roadmap</a>
+          <a class="nav-link" href="#api">API</a>
+          <a class="nav-link" href="/health">Health</a>
+          <a class="nav-link" href="https://github.com/Urdemonlord/samaryn" target="_blank" rel="noreferrer">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="top" class="shell">
+      <section class="hero">
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <div class="hero-kicker">Prompt injection detection + PII masking untuk traffic LLM</div>
+            <h1>Security layer untuk aplikasi AI dan LLM</h1>
+            <p>
+              Samaryn melindungi request sebelum mencapai model dengan policy engine, scan hybrid,
+              dan gateway OpenAI-compatible yang siap dipakai di production.
+            </p>
+            <div class="hero-actions">
+              <a class="button" href="/demo">Lihat demo live</a>
+              <a class="button-ghost" href="#api">Lihat endpoint</a>
+            </div>
+            <div class="hero-points" aria-label="Keunggulan utama">
+              <span>Rust gateway dengan latency rendah</span>
+              <span>Scanner hybrid untuk Bahasa Indonesia</span>
+              <span>Drop-in untuk client OpenAI-compatible</span>
+            </div>
+          </div>
+
+          <div class="hero-visual" aria-label="Preview demo Samaryn">
+            <div class="visual-header">
+              <div class="visual-title">
+                <strong>Interactive gateway preview</strong>
+                <span>Demo asli dari route Samaryn. Bukan mockup statis.</span>
+              </div>
+              <div class="status-chip">Gateway online</div>
+            </div>
+            <div class="iframe-shell">
+              <iframe src="/demo" title="Samaryn Demo"></iframe>
+            </div>
+            <div class="metrics">
+              <div class="metric">
+                <strong>Block</strong>
+                <span>Prompt override, jailbreak, dan pola injeksi dapat dihentikan sebelum diteruskan.</span>
+              </div>
+              <div class="metric">
+                <strong>Mask</strong>
+                <span>Email, nomor telepon, NIK, dan pola sensitif lain bisa dibersihkan di jalur request.</span>
+              </div>
+              <div class="metric">
+                <strong>Route</strong>
+                <span>Traffic tetap masuk lewat satu endpoint yang kompatibel dengan alur OpenAI.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="fitur">
+        <div class="section-head">
+          <h2>Fokus ke proteksi, bukan kosmetik dashboard</h2>
+          <p>
+            Samaryn dirancang untuk tim yang butuh guardrail nyata di jalur request LLM. Surface kecil, keputusan jelas, dan integrasi tetap sederhana.
+          </p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature large">
+            <h3>Policy engine yang memutuskan sebelum model dipanggil</h3>
+            <p>
+              Setiap request diperiksa lebih dulu. Jika pola prompt injection atau data sensitif terdeteksi, gateway bisa block, redact, atau warn sesuai policy.
+            </p>
+            <ul>
+              <li>Rule-based scan untuk pola eksplisit dan serangan yang sudah dikenal</li>
+              <li>ML service terpisah untuk klasifikasi tambahan dan fallback keamanan</li>
+              <li>Audit trail terstruktur agar keputusan mudah dilacak</li>
+            </ul>
+          </article>
+
+          <article class="feature small">
+            <h3>Drop-in untuk aplikasi yang sudah pakai API OpenAI</h3>
+            <p>
+              Endpoint tetap familiar. Kamu tinggal ganti base URL lalu route ke provider yang diinginkan dari gateway yang sama.
+            </p>
+            <ul>
+              <li>Support OpenAI-compatible request flow</li>
+              <li>Bisa route ke OpenAI, Anthropic, Gemini, atau OpenRouter</li>
+              <li>Cocok untuk self-hosting di VPS dan container</li>
+            </ul>
+          </article>
+
+          <article class="feature small">
+            <h3>Bahasa Indonesia bukan afterthought</h3>
+            <p>
+              Positioning Samaryn kuat untuk use case lokal yang sering luput saat hanya mengandalkan filter bahasa Inggris.
+            </p>
+            <ul>
+              <li>Prompt dan contoh demo sudah pakai Bahasa Indonesia</li>
+              <li>PII masking relevan untuk format data lokal</li>
+              <li>Roadmap hybrid scan diarahkan ke akurasi konteks Indonesia</li>
+            </ul>
+          </article>
+
+          <article class="feature large">
+            <h3>Operational shape yang realistis buat production</h3>
+            <p>
+              Arsitektur dipisah jelas antara gateway dan scanner. Ini memudahkan scaling, restart service, dan observability di lingkungan server yang sederhana.
+            </p>
+            <ul>
+              <li>Gateway Rust untuk path utama dan streaming</li>
+              <li>ML service Python untuk scan yang lebih berat</li>
+              <li>Docker Compose ready untuk deployment cepat</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="alur">
+        <div class="section-head">
+          <h2>Alur request yang mudah dipahami tim engineering</h2>
+          <p>
+            Tujuannya sederhana. Semua traffic masuk ke satu titik, diperiksa, lalu diteruskan ke provider bila lolos policy.
+          </p>
+        </div>
+        <div class="flow-grid">
+          <article class="flow-step">
+            <span class="step-number">01</span>
+            <h3>Ingress tunggal</h3>
+            <p>Aplikasi mengirim request ke Samaryn dengan format yang tetap familiar bagi client OpenAI-compatible.</p>
+          </article>
+          <article class="flow-step">
+            <span class="step-number">02</span>
+            <h3>Security scan</h3>
+            <p>Gateway menjalankan rules engine, PII detection, lalu meminta klasifikasi tambahan ke ML service bila dibutuhkan.</p>
+          </article>
+          <article class="flow-step">
+            <span class="step-number">03</span>
+            <h3>Decision</h3>
+            <p>Policy menentukan apakah request diizinkan, dimasking, atau dihentikan sebelum mencapai upstream model.</p>
+          </article>
+          <article class="flow-step">
+            <span class="step-number">04</span>
+            <h3>Forward + audit</h3>
+            <p>Request yang lolos diteruskan ke provider pilihan dan keputusan dicatat untuk observability.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="roadmap">
+        <div class="section-head">
+          <h2>Roadmap produk mengikuti PRD, bukan sekadar splash page</h2>
+          <p>
+            PRD Samaryn memang punya milestone versi yang jelas. Jadi landing page ini sekarang ikut memantulkan arah produk dari MVP sampai enterprise path.
+          </p>
+        </div>
+        <div class="roadmap-grid">
+          <article class="roadmap-card">
+            <strong>v0.1 MVP</strong>
+            <h3>Core gateway yang sudah fokus ke jalur request</h3>
+            <ul>
+              <li>OpenAI-compatible proxy</li>
+              <li>PII masking untuk email, phone, token, dan data sensitif</li>
+              <li>Basic prompt injection detection</li>
+              <li>Audit logging dan deploy via Docker</li>
+            </ul>
+          </article>
+          <article class="roadmap-card">
+            <strong>v0.2</strong>
+            <h3>Lapisan operasional untuk tim yang mulai scale</h3>
+            <ul>
+              <li>Web dashboard</li>
+              <li>Analytics dan usage metrics</li>
+              <li>Rule editor UI</li>
+              <li>Provider fallback</li>
+            </ul>
+          </article>
+          <article class="roadmap-card">
+            <strong>v0.3</strong>
+            <h3>Kontrol runtime yang lebih agresif untuk agentic flow</h3>
+            <ul>
+              <li>Realtime stream filtering</li>
+              <li>AI agent sandbox</li>
+              <li>Tool permission system</li>
+            </ul>
+          </article>
+          <article class="roadmap-card">
+            <strong>v1.0</strong>
+            <h3>Enterprise policy engine untuk deployment serius</h3>
+            <ul>
+              <li>Enterprise policy engine</li>
+              <li>Distributed deployment</li>
+              <li>Compliance mode seperti HIPAA dan SOC2</li>
+              <li>Advanced observability</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="api">
+        <div class="section-head">
+          <h2>Endpoint inti yang langsung bisa diuji</h2>
+          <p>
+            Landing page ini sengaja dekat ke realitas operasional. Tidak ada CTA kosong. Semua entry point utama bisa dicoba dari environment yang sama.
+          </p>
+        </div>
+        <div class="ops-grid">
+          <article class="code-card" aria-label="Contoh request curl">
+            <pre><code>curl https://samaryn.meowlabs.id/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer &lt;API_KEY&gt;" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [
+      {"role": "user", "content": "Balas singkat: sistem aktif"}
+    ]
+  }'</code></pre>
+          </article>
+
+          <aside class="summary-card">
+            <div class="summary-list">
+              <div class="summary-item">
+                <strong>GET /</strong>
+                <span>Landing page ini untuk positioning, docs singkat, dan jalur masuk ke demo live.</span>
+              </div>
+              <div class="summary-item">
+                <strong>GET /demo</strong>
+                <span>Interactive preview untuk melihat keputusan gateway terhadap beberapa skenario nyata.</span>
+              </div>
+              <div class="summary-item">
+                <strong>GET /health</strong>
+                <span>Health probe sederhana untuk verifikasi service dan wiring deployment.</span>
+              </div>
+              <div class="summary-item">
+                <strong>POST /v1/chat/completions</strong>
+                <span>Endpoint utama untuk integrasi aplikasi yang ingin tetap memakai alur OpenAI-compatible.</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="cta-band">
+          <div>
+            <h3>Butuh bukti cepat, bukan janji marketing?</h3>
+            <p>
+              Buka demo live untuk melihat request aman, injeksi langsung, dan skenario out-of-domain lewat gateway yang sama.
+            </p>
+          </div>
+          <a class="button" href="/demo">Buka demo</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="shell">
+      <div class="footer-line">
+        Samaryn by Meow Labs. Built for AI teams yang butuh kontrol di jalur request, bukan sekadar wrapper ke provider.
+      </div>
+    </footer>
+  </body>
+</html>

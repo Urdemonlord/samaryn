@@ -26,8 +26,8 @@ pub async fn auth_middleware(
         return next.run(request).await;
     }
 
-    // Skip auth for health check endpoint
-    if request.uri().path() == "/health" {
+    // Skip auth for public landing/demo/health endpoints
+    if matches!(request.uri().path(), "/" | "/demo" | "/health") {
         return next.run(request).await;
     }
 
