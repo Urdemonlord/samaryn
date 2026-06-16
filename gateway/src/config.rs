@@ -171,6 +171,11 @@ pub struct LoggingConfig {
     /// Optional path to an audit log file (JSONL format).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub audit_file: Option<String>,
+
+    /// Optional path to a dashboard event log file (JSONL format).
+    #[serde(default = "default_dashboard_event_file")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dashboard_event_file: Option<String>,
 }
 
 impl Default for LoggingConfig {
@@ -179,6 +184,7 @@ impl Default for LoggingConfig {
             format: default_log_format(),
             level: default_log_level(),
             audit_file: None,
+            dashboard_event_file: default_dashboard_event_file(),
         }
     }
 }
@@ -189,6 +195,10 @@ fn default_log_format() -> String {
 
 fn default_log_level() -> String {
     "info".to_string()
+}
+
+fn default_dashboard_event_file() -> Option<String> {
+    Some("dashboard-events.jsonl".to_string())
 }
 
 impl Default for AppConfig {
@@ -292,6 +302,8 @@ fn get_config_search_paths() -> Vec<PathBuf> {
 /// - `SAMARYN__SECURITY__ACTION` → security.action
 /// - `SAMARYN__LOGGING__LEVEL` → logging.level
 /// - `SAMARYN__LOGGING__FORMAT` → logging.format
+/// - `SAMARYN__LOGGING__AUDIT_FILE` → logging.audit_file
+/// - `SAMARYN__LOGGING__DASHBOARD_EVENT_FILE` → logging.dashboard_event_file
 fn apply_env_overrides(config: &mut AppConfig) {
     if let Ok(val) = env::var("SAMARYN__SERVER__HOST") {
         config.server.host = val;
@@ -332,6 +344,20 @@ fn apply_env_overrides(config: &mut AppConfig) {
     }
     if let Ok(val) = env::var("SAMARYN__LOGGING__FORMAT") {
         config.logging.format = val;
+    }
+    if let Ok(val) = env::var("SAMARYN__LOGGING__AUDIT_FILE") {
+        config.logging.audit_file = if val.trim().is_empty() {
+            None
+        } else {
+            Some(val)
+        };
+    }
+    if let Ok(val) = env::var("SAMARYN__LOGGING__DASHBOARD_EVENT_FILE") {
+        config.logging.dashboard_event_file = if val.trim().is_empty() {
+            None
+        } else {
+            Some(val)
+        };
     }
 }
 

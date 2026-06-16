@@ -116,3 +116,4 @@ logging:
   format: "json"
   level: "info"
   audit_file: "audit.jsonl"
+  dashboard_event_file: "dashboard-events.jsonl"

@@ -3,49 +3,49 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Samaryn Dashboard</title>
+    <title>Samaryn Operator Dashboard</title>
     <meta
       name="description"
-      content="Samaryn dashboard untuk status runtime, versi live, endpoint aktif, dan roadmap delivery."
+      content="Operator dashboard Samaryn untuk runtime gateway, traffic, model usage, security findings, dan recent events."
     />
     <style>
       :root {
-        --bg: #08111f;
-        --bg-soft: #0d1829;
-        --panel: rgba(15, 23, 42, 0.84);
-        --panel-strong: #0f1b2e;
-        --line: rgba(148, 163, 184, 0.18);
-        --line-strong: rgba(56, 189, 248, 0.3);
-        --text: #f8fafc;
-        --muted: #a8b3c7;
-        --subtle: #64748b;
+        --bg: #07111d;
+        --bg-soft: #0b1727;
+        --panel: #0e1a2c;
+        --panel-2: #101f35;
+        --line: rgba(148, 163, 184, 0.14);
+        --line-strong: rgba(56, 189, 248, 0.28);
+        --text: #edf4ff;
+        --muted: #9fb0c7;
+        --subtle: #6e7f97;
         --green: #22c55e;
-        --green-soft: rgba(34, 197, 94, 0.14);
+        --green-soft: rgba(34, 197, 94, 0.12);
         --cyan: #38bdf8;
         --cyan-soft: rgba(56, 189, 248, 0.12);
         --amber: #f59e0b;
-        --amber-soft: rgba(245, 158, 11, 0.14);
+        --amber-soft: rgba(245, 158, 11, 0.12);
         --red: #ef4444;
-        --red-soft: rgba(239, 68, 68, 0.14);
-        --shadow: 0 28px 80px rgba(2, 6, 23, 0.42);
-        --radius-xl: 28px;
-        --radius-lg: 20px;
+        --red-soft: rgba(239, 68, 68, 0.12);
+        --shadow: 0 24px 80px rgba(2, 6, 23, 0.36);
+        --radius-xl: 24px;
+        --radius-lg: 18px;
         --radius-md: 14px;
         --radius-sm: 10px;
       }
 
       * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
       body {
         margin: 0;
         min-height: 100dvh;
-        font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-        color: var(--text);
         background:
-          radial-gradient(circle at top right, rgba(34, 197, 94, 0.1), transparent 24%),
-          radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 30%),
-          linear-gradient(180deg, #07101c 0%, #08111f 55%, #0a1422 100%);
+          radial-gradient(circle at top right, rgba(56, 189, 248, 0.08), transparent 28%),
+          radial-gradient(circle at top left, rgba(34, 197, 94, 0.06), transparent 22%),
+          linear-gradient(180deg, #06101b 0%, #07111d 45%, #091420 100%);
+        color: var(--text);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
-
       body::before {
         content: "";
         position: fixed;
@@ -54,150 +54,469 @@
         background:
           linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
           linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-        background-size: 44px 44px;
-        mask-image: radial-gradient(circle at center, black, transparent 88%);
+        background-size: 38px 38px;
+        mask-image: radial-gradient(circle at center, black, transparent 84%);
       }
 
       a { color: inherit; text-decoration: none; }
-      .shell { width: min(1200px, calc(100% - 32px)); margin: 0 auto; }
+      code { font-family: "SFMono-Regular", ui-monospace, monospace; }
+      .shell { width: min(1360px, calc(100% - 32px)); margin: 0 auto; }
       .topbar {
-        position: sticky; top: 0; z-index: 10;
-        backdrop-filter: blur(14px);
-        background: rgba(8, 17, 31, 0.78);
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        backdrop-filter: blur(16px);
+        background: rgba(7, 17, 29, 0.78);
         border-bottom: 1px solid rgba(148, 163, 184, 0.08);
       }
       .topbar-inner {
-        min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+        min-height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
       }
-      .brand { display: inline-flex; align-items: center; gap: 12px; font-weight: 700; letter-spacing: -0.02em; }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
       .brand-mark {
-        width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px;
-        color: var(--green);
-        background: linear-gradient(180deg, rgba(34, 197, 94, 0.16), rgba(56, 189, 248, 0.12));
-        border: 1px solid rgba(34, 197, 94, 0.22);
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        background: linear-gradient(180deg, rgba(34, 197, 94, 0.18), rgba(56, 189, 248, 0.16));
+        border: 1px solid rgba(56, 189, 248, 0.26);
+        color: #dbf9e6;
       }
-      .brand-copy { display: flex; flex-direction: column; gap: 2px; }
+      .brand-copy { display: grid; gap: 2px; }
       .brand-copy strong { font-size: 1rem; }
       .brand-copy span { font-size: 0.8rem; color: var(--muted); }
-      .nav-links { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-      .nav-link, .button, .button-ghost {
-        display: inline-flex; align-items: center; justify-content: center; min-height: 44px;
-        padding: 0 16px; border-radius: 999px; border: 1px solid transparent; font-weight: 600;
-        transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
+      .top-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .button,
+      .button-ghost,
+      .chip {
+        min-height: 42px;
+        padding: 0 14px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        border: 1px solid transparent;
       }
-      .nav-link { color: var(--muted); }
-      .nav-link:hover, .button:hover, .button-ghost:hover { transform: translateY(-1px); }
-      .nav-link:hover { color: var(--text); }
       .button {
         background: linear-gradient(180deg, var(--green), #16a34a);
-        color: #041109; box-shadow: 0 14px 30px rgba(34, 197, 94, 0.24);
+        color: #041109;
+        box-shadow: 0 16px 34px rgba(34, 197, 94, 0.2);
+        cursor: pointer;
       }
       .button-ghost {
-        border-color: rgba(56, 189, 248, 0.24); background: rgba(56, 189, 248, 0.08); color: var(--text);
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(148, 163, 184, 0.14);
+        color: var(--text);
+      }
+      .chip {
+        min-height: 34px;
+        padding: 0 12px;
+        font-size: 0.85rem;
+        background: var(--amber-soft);
+        border-color: rgba(245, 158, 11, 0.24);
+        color: #fde68a;
+      }
+      .chip.ok {
+        background: var(--green-soft);
+        border-color: rgba(34, 197, 94, 0.24);
+        color: #c9f6d7;
+      }
+      .chip.error {
+        background: var(--red-soft);
+        border-color: rgba(239, 68, 68, 0.24);
+        color: #fecaca;
       }
 
-      main { padding: 48px 0 40px; }
+      main { padding: 28px 0 40px; }
       .hero {
-        display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 24px; align-items: stretch;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 24px 0 22px;
       }
-      .panel {
-        border-radius: var(--radius-xl); border: 1px solid var(--line);
-        background: linear-gradient(180deg, rgba(15, 23, 42, 0.82), rgba(10, 18, 34, 0.94));
-        box-shadow: var(--shadow);
+      .hero-copy { max-width: 760px; }
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 12px;
+        border-radius: 999px;
+        background: rgba(56, 189, 248, 0.08);
+        border: 1px solid rgba(56, 189, 248, 0.16);
+        color: #d9f4ff;
+        font-size: 0.88rem;
+        margin-bottom: 14px;
       }
-      .hero-copy { padding: 32px; }
-      .kicker {
-        display: inline-flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 999px;
-        background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.18);
-        color: #c8f6d8; font-size: 0.92rem; margin-bottom: 18px;
-      }
-      .kicker::before {
-        content: ""; width: 9px; height: 9px; border-radius: 999px; background: var(--green);
-        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.12);
+      .eyebrow::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--cyan);
+        box-shadow: 0 0 0 6px rgba(56, 189, 248, 0.12);
       }
       h1, h2, h3, p { margin: 0; }
-      h1 { font-size: clamp(2.6rem, 6vw, 4.6rem); line-height: 0.94; letter-spacing: -0.06em; max-width: 9ch; }
-      .hero-copy > p {
-        margin-top: 18px; color: var(--muted); line-height: 1.7; max-width: 58ch; font-size: 1.03rem;
+      h1 {
+        font-size: clamp(2.4rem, 5vw, 4.2rem);
+        line-height: 0.95;
+        letter-spacing: -0.06em;
       }
-      .point-list {
-        margin-top: 24px; display: flex; flex-wrap: wrap; gap: 10px;
+      .hero-copy p {
+        margin-top: 14px;
+        color: var(--muted);
+        line-height: 1.65;
+        max-width: 68ch;
       }
-      .point-list span {
-        display: inline-flex; align-items: center; min-height: 38px; padding: 0 14px; border-radius: 999px;
-        background: rgba(15, 23, 42, 0.68); border: 1px solid rgba(148, 163, 184, 0.14); color: #d7deea; font-size: 0.92rem;
+      .hero-meta {
+        margin-top: 18px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .hero-meta span {
+        display: inline-flex;
+        align-items: center;
+        min-height: 36px;
+        padding: 0 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        color: #dbe7f7;
+        font-size: 0.9rem;
+      }
+      .hero-side {
+        display: grid;
+        gap: 10px;
+        min-width: 240px;
+      }
+      .runtime-note {
+        padding: 16px 18px;
+        border-radius: var(--radius-md);
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.84), rgba(11, 22, 36, 0.92));
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+      }
+      .runtime-note .label {
+        color: var(--muted);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .runtime-note .value {
+        margin-top: 8px;
+        font-size: 1.08rem;
+        font-weight: 700;
+      }
+      .runtime-note .subtle {
+        margin-top: 6px;
+        font-size: 0.9rem;
+        color: var(--subtle);
       }
 
-      .runtime-panel { padding: 24px; display: grid; gap: 16px; }
-      .status-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-      .status-chip {
-        display: inline-flex; align-items: center; min-height: 34px; padding: 0 12px; border-radius: 999px;
-        background: var(--amber-soft); border: 1px solid rgba(245, 158, 11, 0.24); color: #fde68a; font-size: 0.86rem;
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 14px;
       }
-      .status-chip.ok { background: var(--green-soft); border-color: rgba(34, 197, 94, 0.22); color: #c8f6d8; }
-      .status-chip.error { background: var(--red-soft); border-color: rgba(239, 68, 68, 0.22); color: #fecaca; }
-      .metric-grid {
-        display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
+      .panel {
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(14, 26, 44, 0.92), rgba(10, 19, 32, 0.96));
+        box-shadow: var(--shadow);
       }
-      .metric {
-        padding: 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.03); border: 1px solid rgba(148,163,184,0.1);
+      .kpi-card {
+        padding: 18px;
       }
-      .metric-label { color: var(--muted); font-size: 0.84rem; text-transform: uppercase; letter-spacing: 0.08em; }
-      .metric-value { margin-top: 8px; font-size: 1.12rem; font-weight: 700; word-break: break-word; }
-      .metric-subtle { margin-top: 6px; color: var(--subtle); font-size: 0.9rem; line-height: 1.5; }
+      .kpi-label {
+        color: var(--muted);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .kpi-value {
+        margin-top: 10px;
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        font-weight: 800;
+        letter-spacing: -0.04em;
+      }
+      .kpi-subtle {
+        margin-top: 8px;
+        font-size: 0.88rem;
+        color: var(--subtle);
+      }
 
-      section { padding-top: 28px; }
-      .section-head { display: grid; gap: 10px; margin-bottom: 18px; }
-      .section-head h2 { font-size: clamp(1.9rem, 4vw, 3rem); line-height: 1; letter-spacing: -0.05em; }
-      .section-head p { color: var(--muted); line-height: 1.7; max-width: 64ch; }
+      section { padding-top: 20px; }
+      .section-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 14px;
+      }
+      .section-head h2 {
+        font-size: clamp(1.3rem, 2vw, 1.7rem);
+        letter-spacing: -0.04em;
+      }
+      .section-head p {
+        color: var(--muted);
+        line-height: 1.6;
+        max-width: 72ch;
+      }
+      .section-tag {
+        color: var(--subtle);
+        font-size: 0.86rem;
+      }
 
-      .card-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+      .main-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 16px;
+      }
+      .stack { display: grid; gap: 16px; }
       .card {
-        grid-column: span 6; padding: 22px; border-radius: var(--radius-lg); border: 1px solid var(--line);
-        background: linear-gradient(180deg, rgba(15, 23, 42, 0.78), rgba(10, 18, 34, 0.9)); box-shadow: var(--shadow);
+        padding: 20px;
       }
-      .card h3 { font-size: 1.18rem; margin-bottom: 12px; }
-      .card p { color: var(--muted); line-height: 1.68; }
-      .stack { display: grid; gap: 12px; margin-top: 16px; }
-      .row {
-        display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 14px 16px;
-        border-radius: var(--radius-md); background: rgba(255,255,255,0.03); border: 1px solid rgba(148,163,184,0.08);
+      .card-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 16px;
       }
-      .row strong { display: block; margin-bottom: 4px; }
-      .row span { color: var(--muted); line-height: 1.55; }
-      .badge {
-        flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 30px; padding: 0 10px;
-        border-radius: 999px; font-size: 0.82rem; font-weight: 700;
+      .card-head h3 {
+        font-size: 1.08rem;
+        letter-spacing: -0.03em;
       }
-      .badge.done { background: var(--green-soft); color: #c8f6d8; border: 1px solid rgba(34, 197, 94, 0.22); }
-      .badge.pending { background: var(--amber-soft); color: #fde68a; border: 1px solid rgba(245, 158, 11, 0.22); }
-      .badge.missing { background: var(--red-soft); color: #fecaca; border: 1px solid rgba(239, 68, 68, 0.22); }
+      .card-head p {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 0.92rem;
+        line-height: 1.55;
+      }
 
-      .endpoint-list {
-        list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 10px;
+      .traffic-chart {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 10px;
+        align-items: end;
+        min-height: 260px;
       }
-      .endpoint-list li {
-        padding: 14px 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.03); border: 1px solid rgba(148,163,184,0.08);
+      .traffic-point {
+        display: grid;
+        gap: 8px;
       }
-      .endpoint-list code { color: #d8f4ff; }
-      .notice {
-        margin-top: 16px; padding: 16px 18px; border-radius: var(--radius-md);
-        background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.16); color: #d8f4ff; line-height: 1.65;
+      .traffic-bars {
+        min-height: 200px;
+        display: flex;
+        align-items: end;
+        gap: 6px;
       }
-      footer { padding: 24px 0 40px; color: var(--subtle); font-size: 0.92rem; }
-      .footer-line { padding-top: 22px; border-top: 1px solid rgba(148, 163, 184, 0.12); }
+      .traffic-bar {
+        flex: 1;
+        min-height: 8px;
+        border-radius: 999px 999px 4px 4px;
+        background: linear-gradient(180deg, rgba(56, 189, 248, 0.92), rgba(14, 165, 233, 0.58));
+      }
+      .traffic-bar.blocked {
+        background: linear-gradient(180deg, rgba(239, 68, 68, 0.92), rgba(220, 38, 38, 0.5));
+      }
+      .traffic-label {
+        color: var(--subtle);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
 
-      @media (max-width: 960px) {
-        .hero, .metric-grid { grid-template-columns: 1fr; }
-        .card { grid-column: span 12; }
+      .list {
+        display: grid;
+        gap: 10px;
       }
-      @media (max-width: 720px) {
+      .list-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 12px 14px;
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(148, 163, 184, 0.1);
+      }
+      .list-row strong {
+        display: block;
+        font-size: 0.96rem;
+      }
+      .list-row span {
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+      .list-metric {
+        font-weight: 700;
+        color: #d9f4ff;
+      }
+
+      .security-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      .security-stat {
+        padding: 14px;
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(148, 163, 184, 0.1);
+      }
+      .security-stat .label {
+        color: var(--muted);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .security-stat .value {
+        margin-top: 8px;
+        font-size: 1.4rem;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+      }
+      .security-stat.critical .value { color: #fecaca; }
+      .security-stat.warning .value { color: #fde68a; }
+      .security-stat.ok .value { color: #c9f6d7; }
+
+      .health-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .health-card {
+        padding: 14px;
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(148, 163, 184, 0.1);
+      }
+      .health-card .label {
+        color: var(--muted);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .health-card .value {
+        margin-top: 8px;
+        font-size: 1rem;
+        font-weight: 700;
+      }
+      .health-card .subtle {
+        margin-top: 5px;
+        color: var(--subtle);
+        font-size: 0.88rem;
+      }
+
+      .events-table-wrap {
+        overflow-x: auto;
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(148, 163, 184, 0.1);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 920px;
+      }
+      th,
+      td {
+        padding: 12px 14px;
+        text-align: left;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+        vertical-align: top;
+      }
+      th {
+        color: var(--muted);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        background: rgba(255, 255, 255, 0.02);
+      }
+      td {
+        font-size: 0.92rem;
+        color: #dfe9f7;
+      }
+      tr:last-child td { border-bottom: none; }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 0 10px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        border: 1px solid transparent;
+      }
+      .pill.ok {
+        background: var(--green-soft);
+        border-color: rgba(34, 197, 94, 0.22);
+        color: #c9f6d7;
+      }
+      .pill.warn {
+        background: var(--amber-soft);
+        border-color: rgba(245, 158, 11, 0.22);
+        color: #fde68a;
+      }
+      .pill.error {
+        background: var(--red-soft);
+        border-color: rgba(239, 68, 68, 0.22);
+        color: #fecaca;
+      }
+      .empty,
+      .error-box {
+        padding: 16px;
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px dashed rgba(148, 163, 184, 0.18);
+        color: var(--muted);
+        line-height: 1.6;
+      }
+      .error-box {
+        background: rgba(239, 68, 68, 0.08);
+        border-style: solid;
+        border-color: rgba(239, 68, 68, 0.18);
+        color: #fecaca;
+      }
+      .footnote {
+        margin-top: 14px;
+        color: var(--subtle);
+        font-size: 0.88rem;
+      }
+
+      @media (max-width: 1120px) {
+        .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .main-grid { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 860px) {
+        .hero { flex-direction: column; }
+        .hero-side { width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .traffic-chart { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+      }
+      @media (max-width: 680px) {
+        .shell { width: min(100%, calc(100% - 20px)); }
         .topbar-inner { align-items: flex-start; flex-direction: column; padding: 14px 0; }
-        .nav-links { width: 100%; }
-        .nav-link, .button, .button-ghost { width: 100%; }
-        main { padding-top: 32px; }
-        h1 { max-width: none; }
-        .point-list { flex-direction: column; }
+        .top-actions { width: 100%; }
+        .button, .button-ghost { width: 100%; }
+        .kpi-grid,
+        .security-grid,
+        .health-grid,
+        .hero-side { grid-template-columns: 1fr; }
+        .traffic-chart { grid-template-columns: repeat(4, minmax(0, 1fr)); }
       }
     </style>
   </head>
@@ -208,236 +527,423 @@
           <span class="brand-mark">S</span>
           <span class="brand-copy">
             <strong>Samaryn</strong>
-            <span>Runtime Overview</span>
+            <span>Operator Dashboard</span>
           </span>
         </a>
-        <nav class="nav-links">
-          <a class="nav-link" href="/">Landing</a>
-          <a class="nav-link" href="/demo">Live Demo</a>
+        <div class="top-actions">
+          <a class="button-ghost" href="/demo">Live Demo</a>
           <a class="button-ghost" href="/health">Health JSON</a>
-          <button class="button" id="refresh-btn" type="button">Refresh Runtime</button>
-        </nav>
+          <div class="chip" id="refresh-state">LOADING</div>
+          <button class="button" id="refresh-btn" type="button">Refresh</button>
+        </div>
       </div>
     </header>
 
     <main class="shell">
       <section class="hero">
-        <article class="panel hero-copy">
-          <div class="kicker">Runtime Overview</div>
+        <div class="hero-copy">
+          <div class="eyebrow">24h operator view</div>
           <h1>Samaryn Gateway Dashboard</h1>
           <p>
-            Status runtime, versi live, endpoint aktif, dan roadmap delivery untuk Samaryn Gateway.
+            Surface operasional untuk runtime gateway: volume request, model usage,
+            blocked traffic, recent events, dan status ML scanner tanpa copy marketing.
           </p>
-          <div class="point-list">
-            <span>OpenAI-compatible gateway</span>
-            <span>Prompt injection & PII scan</span>
-            <span>Landing, demo, and dashboard</span>
-            <span>Live health and version</span>
+          <div class="hero-meta">
+            <span>JSONL-backed metrics</span>
+            <span>Security-first routing</span>
+            <span>Live aggregator API</span>
           </div>
-        </article>
-
-        <aside class="panel runtime-panel">
-          <div class="status-head">
-            <div>
-              <div class="metric-label">Runtime status</div>
-              <div class="metric-value" id="runtime-title">Checking live gateway...</div>
-            </div>
-            <div class="status-chip" id="runtime-chip">LOADING</div>
+        </div>
+        <div class="hero-side">
+          <div class="runtime-note panel">
+            <div class="label">Last refresh</div>
+            <div class="value" id="last-refresh">-</div>
+            <div class="subtle">Fetch dari <code>/api/dashboard/*</code>.</div>
           </div>
-
-          <div class="metric-grid">
-            <div class="metric">
-              <div class="metric-label">Service</div>
-              <div class="metric-value" id="service-value">-</div>
-              <div class="metric-subtle">Dibaca langsung dari <code>/health</code>.</div>
-            </div>
-            <div class="metric">
-              <div class="metric-label">Live version</div>
-              <div class="metric-value" id="version-value">-</div>
-              <div class="metric-subtle">Version sourced directly from the live health endpoint.</div>
-            </div>
-            <div class="metric">
-              <div class="metric-label">Current release</div>
-              <div class="metric-value">v0.1 gateway</div>
-              <div class="metric-subtle">Landing, demo, dashboard, and gateway API.</div>
-            </div>
-            <div class="metric">
-              <div class="metric-label">Last refresh</div>
-              <div class="metric-value" id="checked-at">-</div>
-              <div class="metric-subtle">Use refresh to pull the latest runtime state.</div>
-            </div>
+          <div class="runtime-note panel">
+            <div class="label">Current state</div>
+            <div class="value" id="runtime-title">Fetching live operator data...</div>
+            <div class="subtle" id="runtime-subtle">Menunggu summary runtime.</div>
           </div>
-
-          <div class="notice" id="runtime-note">
-            Checking Samaryn runtime...
-          </div>
-        </aside>
+        </div>
       </section>
 
       <section>
-        <div class="section-head">
-          <h2>Available surfaces</h2>
-          <p>
-            Active routes and interfaces currently exposed by the gateway.
-          </p>
-        </div>
-        <div class="card-grid">
-          <article class="card">
-            <h3>Live surfaces</h3>
-            <p>Current interfaces exposed by the live gateway.</p>
-            <ul class="endpoint-list">
-              <li><code>GET /</code> - product landing page</li>
-              <li><code>GET /demo</code> - interactive gateway demo</li>
-              <li><code>GET /dashboard</code> - runtime dashboard</li>
-              <li><code>GET /health</code> - health and live version</li>
-              <li><code>POST /v1/chat/completions</code> - OpenAI-compatible proxy</li>
-            </ul>
+        <div class="kpi-grid">
+          <article class="panel kpi-card">
+            <div class="kpi-label">Requests 24h</div>
+            <div class="kpi-value" id="kpi-requests">-</div>
+            <div class="kpi-subtle">Total request chat completions yang terekam.</div>
           </article>
-
-          <article class="card">
-            <h3>Planned next</h3>
-            <p>Capabilities tracked for the next delivery stages.</p>
-            <div class="stack">
-              <div class="row">
-                <div>
-                  <strong>Monitoring dashboard and logs</strong>
-                  <span>Request explorer, filtering, and log drilldown.</span>
-                </div>
-                <span class="badge pending">PLANNED</span>
-              </div>
-              <div class="row">
-                <div>
-                  <strong>Analytics by model and tenant</strong>
-                  <span>Usage charts, token accounting, and traffic breakdown.</span>
-                </div>
-                <span class="badge pending">PLANNED</span>
-              </div>
-              <div class="row">
-                <div>
-                  <strong>Access control and quota management</strong>
-                  <span>RBAC, API key controls, and quota administration.</span>
-                </div>
-                <span class="badge pending">PLANNED</span>
-              </div>
-            </div>
+          <article class="panel kpi-card">
+            <div class="kpi-label">Success rate</div>
+            <div class="kpi-value" id="kpi-success">-</div>
+            <div class="kpi-subtle">Allowed + redacted dibanding total event.</div>
+          </article>
+          <article class="panel kpi-card">
+            <div class="kpi-label">Blocked / escalated</div>
+            <div class="kpi-value" id="kpi-blocked">-</div>
+            <div class="kpi-subtle">Rule block, ML block, dan escalation.</div>
+          </article>
+          <article class="panel kpi-card">
+            <div class="kpi-label">Avg latency</div>
+            <div class="kpi-value" id="kpi-latency">-</div>
+            <div class="kpi-subtle">Rata-rata latency request upstream yang tercatat.</div>
+          </article>
+          <article class="panel kpi-card">
+            <div class="kpi-label">Active models</div>
+            <div class="kpi-value" id="kpi-models">-</div>
+            <div class="kpi-subtle">Jumlah model unik dalam window 24h.</div>
           </article>
         </div>
       </section>
 
       <section>
         <div class="section-head">
-          <h2>Roadmap alignment</h2>
-          <p>Current delivery status mapped against the Samaryn product roadmap.</p>
+          <div>
+            <h2>Traffic & Usage</h2>
+            <p>Bucket hourly dari event request 24 jam terakhir dan distribusi model yang dipakai gateway.</p>
+          </div>
+          <div class="section-tag">Window: <span id="window-label">24h</span></div>
         </div>
-        <div class="card-grid">
-          <article class="card">
-            <h3>v0.1 delivered</h3>
-            <div class="stack">
-              <div class="row">
-                <div>
-                  <strong>Core gateway</strong>
-                  <span>OpenAI-compatible proxy is active.</span>
-                </div>
-                <span class="badge done">DONE</span>
-              </div>
-              <div class="row">
-                <div>
-                  <strong>Security filter</strong>
-                  <span>PII masking and prompt injection scanning are in the request flow.</span>
-                </div>
-                <span class="badge done">DONE</span>
-              </div>
-              <div class="row">
-                <div>
-                  <strong>Frontend surfaces</strong>
-                  <span>Landing, demo, and dashboard are live.</span>
-                </div>
-                <span class="badge done">DONE</span>
-              </div>
-            </div>
-          </article>
 
-          <article class="card">
-            <h3>v0.2 in progress</h3>
-            <div class="stack">
-              <div class="row">
+        <div class="main-grid">
+          <div class="stack">
+            <article class="panel card">
+              <div class="card-head">
                 <div>
-                  <strong>Monitoring dashboard</strong>
-                  <span>Current dashboard covers runtime status. Full operator console is planned.</span>
+                  <h3>Traffic by hour</h3>
+                  <p>Bar cyan = allowed/redacted. Bar merah = blocked/escalated.</p>
                 </div>
-                <span class="badge pending">PARTIAL</span>
               </div>
-              <div class="row">
+              <div id="traffic-root" class="traffic-chart"></div>
+              <div class="footnote">Jika event file masih kosong, chart akan tetap kosong sampai traffic baru masuk.</div>
+            </article>
+
+            <article class="panel card">
+              <div class="card-head">
                 <div>
-                  <strong>Analytics & usage metrics</strong>
-                  <span>Model and tenant analytics are not yet exposed in the UI.</span>
+                  <h3>Recent events</h3>
+                  <p>20 event terbaru dari <code>/v1/chat/completions</code> untuk inspeksi operator.</p>
                 </div>
-                <span class="badge missing">MISSING</span>
               </div>
-              <div class="row">
+              <div id="events-root" class="events-table-wrap"></div>
+            </article>
+          </div>
+
+          <div class="stack">
+            <article class="panel card">
+              <div class="card-head">
                 <div>
-                  <strong>Rule builder UI</strong>
-                  <span>Web-based policy and rules editing is not yet available.</span>
+                  <h3>Model usage</h3>
+                  <p>Distribusi model dalam window aktif.</p>
                 </div>
-                <span class="badge missing">MISSING</span>
               </div>
-            </div>
-          </article>
+              <div id="models-root" class="list"></div>
+            </article>
+
+            <article class="panel card">
+              <div class="card-head">
+                <div>
+                  <h3>Security summary</h3>
+                  <p>Breakdown rule block, ML block, escalation, dan redaction.</p>
+                </div>
+              </div>
+              <div class="security-grid">
+                <div class="security-stat critical">
+                  <div class="label">Rule blocked</div>
+                  <div class="value" id="security-rule">-</div>
+                </div>
+                <div class="security-stat critical">
+                  <div class="label">ML blocked</div>
+                  <div class="value" id="security-ml">-</div>
+                </div>
+                <div class="security-stat warning">
+                  <div class="label">Escalated</div>
+                  <div class="value" id="security-escalated">-</div>
+                </div>
+                <div class="security-stat ok">
+                  <div class="label">PII redacted</div>
+                  <div class="value" id="security-pii">-</div>
+                </div>
+              </div>
+              <div class="list" id="threats-root"></div>
+              <div class="footnote" id="reasons-root"></div>
+            </article>
+
+            <article class="panel card">
+              <div class="card-head">
+                <div>
+                  <h3>Runtime health</h3>
+                  <p>Status gateway, versi service, dan reachability ML scanner.</p>
+                </div>
+              </div>
+              <div class="health-grid">
+                <div class="health-card">
+                  <div class="label">Gateway</div>
+                  <div class="value" id="health-gateway">-</div>
+                  <div class="subtle">Service <span id="health-service">-</span></div>
+                </div>
+                <div class="health-card">
+                  <div class="label">Version</div>
+                  <div class="value" id="health-version">-</div>
+                  <div class="subtle">Binary release aktif.</div>
+                </div>
+                <div class="health-card">
+                  <div class="label">ML service</div>
+                  <div class="value" id="health-ml">-</div>
+                  <div class="subtle" id="health-ml-subtle">-</div>
+                </div>
+                <div class="health-card">
+                  <div class="label">Surface</div>
+                  <div class="value">/api/dashboard/*</div>
+                  <div class="subtle">Summary, traffic, models, security, events.</div>
+                </div>
+              </div>
+            </article>
+          </div>
         </div>
       </section>
     </main>
 
-    <footer class="shell">
-      <div class="footer-line">
-        Samaryn Dashboard - runtime status, live version, active routes, and roadmap delivery.
-      </div>
-    </footer>
-
     <script>
-      const runtimeChip = document.getElementById("runtime-chip");
-      const runtimeTitle = document.getElementById("runtime-title");
-      const serviceValue = document.getElementById("service-value");
-      const versionValue = document.getElementById("version-value");
-      const checkedAt = document.getElementById("checked-at");
-      const runtimeNote = document.getElementById("runtime-note");
-      const refreshBtn = document.getElementById("refresh-btn");
+      const $ = (id) => document.getElementById(id);
 
-      async function refreshRuntime() {
-        runtimeChip.textContent = "LOADING";
-        runtimeChip.className = "status-chip";
-        runtimeTitle.textContent = "Checking live gateway...";
-        runtimeNote.textContent = "Checking Samaryn runtime...";
+      function formatNumber(value) {
+        return new Intl.NumberFormat("id-ID").format(Number(value || 0));
+      }
 
+      function formatPercent(value) {
+        return `${Number(value || 0).toFixed(1)}%`;
+      }
+
+      function formatLatency(value) {
+        return `${formatNumber(value || 0)} ms`;
+      }
+
+      function formatTime(value) {
+        if (!value) return "-";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        return date.toLocaleString("id-ID", {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/\"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function verdictPill(verdict) {
+        const normalized = String(verdict || "unknown").toLowerCase();
+        if (["allowed", "pii_redacted"].includes(normalized)) {
+          return `<span class="pill ok">${escapeHtml(normalized)}</span>`;
+        }
+        if (["blocked_rule", "blocked_ml", "upstream_error"].includes(normalized)) {
+          return `<span class="pill error">${escapeHtml(normalized)}</span>`;
+        }
+        return `<span class="pill warn">${escapeHtml(normalized)}</span>`;
+      }
+
+      function renderEmpty(targetId, message) {
+        $(targetId).innerHTML = `<div class="empty">${escapeHtml(message)}</div>`;
+      }
+
+      function renderError(targetId, message) {
+        $(targetId).innerHTML = `<div class="error-box">${escapeHtml(message)}</div>`;
+      }
+
+      function setRefreshState(label, className = "") {
+        const el = $("refresh-state");
+        el.textContent = label;
+        el.className = `chip ${className}`.trim();
+      }
+
+      function renderSummary(summary) {
+        $("window-label").textContent = summary.window || "24h";
+        $("kpi-requests").textContent = formatNumber(summary.requests_total);
+        $("kpi-success").textContent = formatPercent(summary.success_rate);
+        $("kpi-blocked").textContent = formatNumber(summary.blocked_total);
+        $("kpi-latency").textContent = formatLatency(summary.avg_latency_ms);
+        $("kpi-models").textContent = formatNumber(summary.active_models);
+
+        $("runtime-title").textContent = `${summary.gateway_health || "unknown"} gateway · ${summary.requests_total || 0} requests / ${summary.window || "24h"}`;
+        $("runtime-subtle").textContent = `ML service: ${summary.ml_service?.health || "unknown"}`;
+        $("last-refresh").textContent = formatTime(new Date().toISOString());
+
+        $("health-gateway").textContent = summary.gateway_health || "unknown";
+        $("health-service").textContent = summary.service || "samaryn-gateway";
+        $("health-version").textContent = summary.version || "-";
+        $("health-ml").textContent = summary.ml_service?.health || "unknown";
+        $("health-ml-subtle").textContent = summary.ml_service?.configured
+          ? `fail_open=${summary.ml_service?.fail_open ? "true" : "false"}`
+          : "scanner URL belum dikonfigurasi";
+
+        setRefreshState("LIVE", summary.gateway_health === "healthy" ? "ok" : "error");
+      }
+
+      function renderTraffic(traffic) {
+        const root = $("traffic-root");
+        const points = Array.isArray(traffic.points) ? traffic.points.slice(-12) : [];
+        if (!points.length) {
+          root.innerHTML = `<div class="empty" style="grid-column: 1 / -1;">Belum ada event 24h untuk divisualisasikan.</div>`;
+          return;
+        }
+
+        const maxRequests = Math.max(...points.map((item) => item.requests || 0), 1);
+        root.innerHTML = points.map((item) => {
+          const allowedHeight = Math.max(8, Math.round(((item.allowed || 0) / maxRequests) * 180));
+          const blockedHeight = Math.max(item.blocked ? 8 : 0, Math.round(((item.blocked || 0) / maxRequests) * 180));
+          const label = new Date(item.timestamp).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+          return `
+            <div class="traffic-point">
+              <div class="traffic-bars" title="allowed=${item.allowed || 0}, blocked=${item.blocked || 0}">
+                <div class="traffic-bar" style="height:${allowedHeight}px"></div>
+                <div class="traffic-bar blocked" style="height:${blockedHeight}px"></div>
+              </div>
+              <div class="traffic-label">${escapeHtml(label)}</div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      function renderModels(models) {
+        const root = $("models-root");
+        const items = Array.isArray(models.items) ? models.items : [];
+        if (!items.length) {
+          renderEmpty("models-root", "Belum ada model usage yang tercatat.");
+          return;
+        }
+
+        root.innerHTML = items.map((item, index) => `
+          <div class="list-row">
+            <div>
+              <strong>#${index + 1} ${escapeHtml(item.model || "unknown")}</strong>
+              <span>Request ke model pada window aktif.</span>
+            </div>
+            <div class="list-metric">${formatNumber(item.requests)}</div>
+          </div>
+        `).join("");
+      }
+
+      function renderSecurity(security) {
+        $("security-rule").textContent = formatNumber(security.blocked_rule);
+        $("security-ml").textContent = formatNumber(security.blocked_ml);
+        $("security-escalated").textContent = formatNumber(security.escalated);
+        $("security-pii").textContent = formatNumber(security.pii_redacted);
+
+        const threats = Array.isArray(security.top_threats) ? security.top_threats : [];
+        if (!threats.length) {
+          renderEmpty("threats-root", "Belum ada threat taxonomy yang terkumpul.");
+        } else {
+          $("threats-root").innerHTML = threats.map((item) => `
+            <div class="list-row">
+              <div>
+                <strong>${escapeHtml(item.name || "unknown")}</strong>
+                <span>Threat label yang muncul di event dashboard.</span>
+              </div>
+              <div class="list-metric">${formatNumber(item.count)}</div>
+            </div>
+          `).join("");
+        }
+
+        const reasons = Array.isArray(security.top_rule_reasons) ? security.top_rule_reasons : [];
+        $("reasons-root").innerHTML = reasons.length
+          ? `Top rule reasons: ${reasons.map((item) => `${escapeHtml(item.reason)} (${formatNumber(item.count)})`).join(", ")}`
+          : "Top rule reasons belum tersedia.";
+      }
+
+      function renderEvents(events) {
+        const root = $("events-root");
+        const items = Array.isArray(events.items) ? events.items : [];
+        if (!items.length) {
+          renderEmpty("events-root", "Belum ada recent event dari chat completions.");
+          return;
+        }
+
+        root.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Request ID</th>
+                <th>Verdict</th>
+                <th>Model / Provider</th>
+                <th>Status</th>
+                <th>Latency</th>
+                <th>Reason</th>
+                <th>Threats</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map((item) => `
+                <tr>
+                  <td>${escapeHtml(formatTime(item.timestamp))}</td>
+                  <td><code>${escapeHtml(item.request_id || "-")}</code></td>
+                  <td>${verdictPill(item.verdict)}</td>
+                  <td>
+                    <div><strong>${escapeHtml(item.model || "-")}</strong></div>
+                    <div style="color: var(--subtle); margin-top: 4px;">${escapeHtml(item.provider || "-")}</div>
+                  </td>
+                  <td>${escapeHtml(item.status ?? "-")}</td>
+                  <td>${escapeHtml(item.latency_ms != null ? `${formatNumber(item.latency_ms)} ms` : "-")}</td>
+                  <td>${escapeHtml(item.reason || "-")}</td>
+                  <td>${escapeHtml((item.threat_types || []).join(", ") || "-")}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
+      }
+
+      async function fetchJson(url) {
+        const response = await fetch(url, { headers: { Accept: "application/json" } });
+        if (!response.ok) {
+          throw new Error(`${url} -> HTTP ${response.status}`);
+        }
+        return response.json();
+      }
+
+      async function refreshDashboard() {
+        setRefreshState("REFRESHING");
         try {
-          const response = await fetch("/health", { cache: "no-store" });
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-          }
+          const [summary, traffic, models, security, events] = await Promise.all([
+            fetchJson("/api/dashboard/summary"),
+            fetchJson("/api/dashboard/traffic"),
+            fetchJson("/api/dashboard/models"),
+            fetchJson("/api/dashboard/security"),
+            fetchJson("/api/dashboard/events?limit=20"),
+          ]);
 
-          const body = await response.json();
-          const healthy = body?.status === "healthy";
-          runtimeChip.textContent = healthy ? "LIVE HEALTHY" : "UNHEALTHY";
-          runtimeChip.className = healthy ? "status-chip ok" : "status-chip error";
-          runtimeTitle.textContent = healthy ? "Gateway is live and responding." : "Gateway responded with a non-healthy status.";
-          serviceValue.textContent = body?.service || "-";
-          versionValue.textContent = body?.version || "-";
-          checkedAt.textContent = new Date().toLocaleTimeString();
-          runtimeNote.textContent = healthy
-            ? `Live runtime is currently on version ${body.version}.`
-            : "Gateway responded, but the runtime status needs attention.";
+          renderSummary(summary);
+          renderTraffic(traffic);
+          renderModels(models);
+          renderSecurity(security);
+          renderEvents(events);
         } catch (error) {
-          runtimeChip.textContent = "ERROR";
-          runtimeChip.className = "status-chip error";
-          runtimeTitle.textContent = "Unable to read live runtime.";
-          serviceValue.textContent = "-";
-          versionValue.textContent = "-";
-          checkedAt.textContent = new Date().toLocaleTimeString();
-          runtimeNote.textContent = `Health check failed: ${String(error)}`;
+          console.error(error);
+          setRefreshState("ERROR", "error");
+          $("runtime-title").textContent = "Dashboard fetch gagal";
+          $("runtime-subtle").textContent = error.message;
+          ["traffic-root", "models-root", "threats-root", "events-root"].forEach((id) => {
+            renderError(id, error.message);
+          });
+          $("reasons-root").textContent = error.message;
         }
       }
 
-      refreshBtn.addEventListener("click", refreshRuntime);
-      refreshRuntime();
+      $("refresh-btn").addEventListener("click", refreshDashboard);
+      refreshDashboard();
     </script>
   </body>
 </html>

@@ -28,4 +28,7 @@ pub struct AppState {
 
     /// YAML-based security rules engine.
     pub rules_engine: RulesEngine,
+
+    /// Optional JSONL event sink for operator dashboard metrics.
+    pub dashboard_event_file: Option<String>,
 }

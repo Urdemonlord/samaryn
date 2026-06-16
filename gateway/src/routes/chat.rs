@@ -1,4 +1,4 @@
-//! Chat completions proxy handler — the core of the Samaryn Gateway.
+//! Chat completions proxy handler - the core of the Samaryn Gateway.
 //!
 //! This handler intercepts OpenAI-compatible chat completion requests,
 //! scans them for security threats (PII, prompt injection), optionally
@@ -6,13 +6,17 @@
 //! request to the appropriate upstream LLM provider.
 
 use std::sync::Arc;
+use std::time::Instant;
 
 use axum::extract::State;
 use axum::response::Response;
 use axum::Json;
+use chrono::Utc;
 use tracing::{debug, info, warn};
 
+use crate::dashboard_events::append_dashboard_event;
 use crate::error::GatewayError;
+use crate::models::dashboard::{DashboardEvent, DashboardVerdict};
 use crate::models::openai::ChatCompletionRequest;
 use crate::proxy::streaming;
 use crate::security::rules::RuleResult;
@@ -60,9 +64,11 @@ pub async fn chat_completions(
     State(state): State<Arc<AppState>>,
     Json(mut payload): Json<ChatCompletionRequest>,
 ) -> Result<Response, GatewayError> {
+    let request_started = Instant::now();
     let request_id = uuid::Uuid::new_v4().to_string();
     let model = payload.model.clone();
     let is_streaming = payload.stream.unwrap_or(false);
+    let mut pii_entities_redacted = 0u32;
 
     info!(
         request_id = %request_id,
@@ -72,10 +78,8 @@ pub async fn chat_completions(
         "Processing chat completion request"
     );
 
-    // Step 1: Extract all text content from messages for security scanning
     let combined_content = extract_message_content(&payload);
 
-    // Step 2: Evaluate security rules
     if state.config.security.injection_detection {
         match state.rules_engine.evaluate(&combined_content) {
             RuleResult::Blocked(reason) => {
@@ -83,6 +87,24 @@ pub async fn chat_completions(
                     request_id = %request_id,
                     reason = %reason,
                     "Request blocked by security rules"
+                );
+                write_dashboard_event(
+                    &state,
+                    build_dashboard_event(
+                        &request_id,
+                        "/v1/chat/completions",
+                        "POST",
+                        Some(model.clone()),
+                        None,
+                        Some(403),
+                        Some(elapsed_ms(request_started)),
+                        DashboardVerdict::BlockedRule,
+                        pii_entities_redacted,
+                        Some(reason.clone()),
+                        None,
+                        None,
+                        vec!["prompt_injection".to_string()],
+                    ),
                 );
                 return Err(GatewayError::SecurityViolation {
                     reason,
@@ -95,17 +117,15 @@ pub async fn chat_completions(
         }
     }
 
-    // Step 3: Detect and redact PII in message content
     if state.config.security.pii_masking {
         let pii_detector = &state.pii_detector;
-        let mut total_pii_found = 0;
 
         for message in &mut payload.messages {
             if let Some(content) = &message.content {
                 if let Some(text) = content.as_str() {
                     if pii_detector.contains_pii(text) {
                         let (redacted, entities) = pii_detector.redact(text);
-                        total_pii_found += entities.len();
+                        pii_entities_redacted += entities.len() as u32;
 
                         if !entities.is_empty() {
                             info!(
@@ -116,18 +136,16 @@ pub async fn chat_completions(
                             );
                         }
 
-                        message.content =
-                            Some(serde_json::Value::String(redacted));
+                        message.content = Some(serde_json::Value::String(redacted));
                     }
                 } else if content.is_array() {
-                    // Handle array content (multi-modal messages)
                     if let Some(arr) = content.as_array() {
                         let mut new_arr = arr.clone();
                         for part in &mut new_arr {
                             if let Some(text) = part.get("text").and_then(|t| t.as_str()) {
                                 if pii_detector.contains_pii(text) {
                                     let (redacted, entities) = pii_detector.redact(text);
-                                    total_pii_found += entities.len();
+                                    pii_entities_redacted += entities.len() as u32;
                                     if let Some(obj) = part.as_object_mut() {
                                         obj.insert(
                                             "text".to_string(),
@@ -137,30 +155,24 @@ pub async fn chat_completions(
                                 }
                             }
                         }
-                        message.content =
-                            Some(serde_json::Value::Array(new_arr));
+                        message.content = Some(serde_json::Value::Array(new_arr));
                     }
                 }
             }
         }
 
-        if total_pii_found > 0 {
+        if pii_entities_redacted > 0 {
             info!(
                 request_id = %request_id,
-                total_pii_entities = total_pii_found,
+                total_pii_entities = pii_entities_redacted,
                 "Total PII entities redacted in request"
             );
         }
     }
 
-    // Step 4: Optionally call ML service for advanced scanning
     if state.config.security.injection_detection {
         let scan_types = vec!["injection".to_string()];
-        match state
-            .security_scanner
-            .scan(&combined_content, scan_types)
-            .await
-        {
+        match state.security_scanner.scan(&combined_content, scan_types).await {
             Ok(scan_result) => {
                 if !scan_result.is_safe {
                     if let Some(classification) = &scan_result.classification {
@@ -172,10 +184,27 @@ pub async fn chat_completions(
                                 source = %classification.source,
                                 "ML service flagged out-of-domain prompt"
                             );
+                            write_dashboard_event(
+                                &state,
+                                build_dashboard_event(
+                                    &request_id,
+                                    "/v1/chat/completions",
+                                    "POST",
+                                    Some(model.clone()),
+                                    None,
+                                    Some(403),
+                                    Some(elapsed_ms(request_started)),
+                                    DashboardVerdict::Escalated,
+                                    pii_entities_redacted,
+                                    None,
+                                    Some(classification.label.clone()),
+                                    Some(classification.action.clone()),
+                                    vec!["out_of_domain".to_string()],
+                                ),
+                            );
 
                             return Err(GatewayError::SecurityViolation {
-                                reason: "Out-of-domain prompt requires escalation"
-                                    .to_string(),
+                                reason: "Out-of-domain prompt requires escalation".to_string(),
                                 threats: vec!["out_of_domain".to_string()],
                             });
                         }
@@ -194,10 +223,27 @@ pub async fn chat_completions(
                                 confidence = classification.confidence,
                                 "ML service detected prompt injection"
                             );
+                            write_dashboard_event(
+                                &state,
+                                build_dashboard_event(
+                                    &request_id,
+                                    "/v1/chat/completions",
+                                    "POST",
+                                    Some(model.clone()),
+                                    None,
+                                    Some(403),
+                                    Some(elapsed_ms(request_started)),
+                                    DashboardVerdict::BlockedMl,
+                                    pii_entities_redacted,
+                                    None,
+                                    Some(classification.label.clone()),
+                                    Some(classification.action.clone()),
+                                    threats.clone(),
+                                ),
+                            );
 
                             return Err(GatewayError::SecurityViolation {
-                                reason: "Prompt injection detected by ML scanner"
-                                    .to_string(),
+                                reason: "Prompt injection detected by ML scanner".to_string(),
                                 threats,
                             });
                         }
@@ -215,23 +261,20 @@ pub async fn chat_completions(
                     }
                 }
             }
-            Err(e) => {
-                // Error is already logged inside the scanner
+            Err(error) => {
                 debug!(
                     request_id = %request_id,
-                    error = %e,
+                    error = %error,
                     "ML service scan returned error (may be handled by fail-open)"
                 );
-                // If fail-open, we already got a safe response, so this
-                // error only surfaces when fail-closed
-                return Err(e);
+                return Err(error);
             }
         }
     }
 
-    // Step 5: Resolve upstream provider
     let provider = state.provider_router.resolve(&model)?;
-    let upstream_model = normalize_model_for_provider(&provider.name, &model);
+    let provider_name = provider.name.clone();
+    let upstream_model = normalize_model_for_provider(&provider_name, &model);
     if upstream_model != model {
         payload.model = upstream_model.clone();
     }
@@ -240,14 +283,13 @@ pub async fn chat_completions(
 
     info!(
         request_id = %request_id,
-        provider = %provider.name,
+        provider = %provider_name,
         upstream_model = %upstream_model,
         upstream_url = %upstream_url,
         "Forwarding request to upstream provider"
     );
 
-    // Step 6: Build and send the upstream request
-    let upstream_response = state
+    let upstream_response = match state
         .http_client
         .post(&upstream_url)
         .header("Authorization", format!("Bearer {}", provider.api_key))
@@ -255,14 +297,35 @@ pub async fn chat_completions(
         .json(&payload)
         .send()
         .await
-        .map_err(|e| {
+    {
+        Ok(response) => response,
+        Err(error) => {
             warn!(
                 request_id = %request_id,
-                error = %e,
+                error = %error,
                 "Failed to forward request to upstream"
             );
-            GatewayError::from(e)
-        })?;
+            write_dashboard_event(
+                &state,
+                build_dashboard_event(
+                    &request_id,
+                    "/v1/chat/completions",
+                    "POST",
+                    Some(model.clone()),
+                    Some(provider_name.clone()),
+                    Some(502),
+                    Some(elapsed_ms(request_started)),
+                    DashboardVerdict::UpstreamError,
+                    pii_entities_redacted,
+                    None,
+                    None,
+                    None,
+                    vec![],
+                ),
+            );
+            return Err(GatewayError::from(error));
+        }
+    };
 
     let upstream_status = upstream_response.status();
     info!(
@@ -271,11 +334,82 @@ pub async fn chat_completions(
         "Received upstream response"
     );
 
-    // Step 7: Forward the response
+    let verdict = if upstream_status.is_success() {
+        if pii_entities_redacted > 0 {
+            DashboardVerdict::PiiRedacted
+        } else {
+            DashboardVerdict::Allowed
+        }
+    } else {
+        DashboardVerdict::UpstreamError
+    };
+
+    write_dashboard_event(
+        &state,
+        build_dashboard_event(
+            &request_id,
+            "/v1/chat/completions",
+            "POST",
+            Some(model),
+            Some(provider_name),
+            Some(upstream_status.as_u16()),
+            Some(elapsed_ms(request_started)),
+            verdict,
+            pii_entities_redacted,
+            None,
+            None,
+            None,
+            vec![],
+        ),
+    );
+
     if is_streaming && upstream_status.is_success() {
         Ok(streaming::forward_streaming(upstream_response))
     } else {
         streaming::forward_non_streaming(upstream_response).await
+    }
+}
+
+fn elapsed_ms(started: Instant) -> u64 {
+    started.elapsed().as_millis().min(u64::MAX as u128) as u64
+}
+
+fn build_dashboard_event(
+    request_id: &str,
+    path: &str,
+    method: &str,
+    model: Option<String>,
+    provider: Option<String>,
+    status: Option<u16>,
+    latency_ms: Option<u64>,
+    verdict: DashboardVerdict,
+    pii_entities_redacted: u32,
+    rule_reason: Option<String>,
+    ml_label: Option<String>,
+    ml_action: Option<String>,
+    threat_types: Vec<String>,
+) -> DashboardEvent {
+    DashboardEvent {
+        timestamp: Utc::now().to_rfc3339(),
+        request_id: request_id.to_string(),
+        path: path.to_string(),
+        method: method.to_string(),
+        model,
+        provider,
+        status,
+        latency_ms,
+        verdict,
+        pii_entities_redacted,
+        rule_reason,
+        ml_label,
+        ml_action,
+        threat_types,
+    }
+}
+
+fn write_dashboard_event(state: &AppState, event: DashboardEvent) {
+    if let Some(path) = state.dashboard_event_file.as_deref() {
+        append_dashboard_event(path, &event);
     }
 }
 
@@ -291,7 +425,6 @@ fn extract_message_content(payload: &ChatCompletionRequest) -> String {
             if let Some(text) = content.as_str() {
                 parts.push(text.to_string());
             } else if let Some(arr) = content.as_array() {
-                // Handle array content (e.g., multi-modal messages)
                 for part in arr {
                     if let Some(text) = part.get("text").and_then(|t| t.as_str()) {
                         parts.push(text.to_string());

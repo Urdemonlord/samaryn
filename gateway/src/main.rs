@@ -4,6 +4,8 @@
 //! prompt injection before forwarding to LLM providers.
 
 mod config;
+mod dashboard_aggregate;
+mod dashboard_events;
 mod error;
 mod middleware;
 mod models;
@@ -83,6 +85,7 @@ async fn main() {
 
     let auth_keys = config.auth_keys.clone();
     let audit_file = config.logging.audit_file.clone();
+    let dashboard_event_file = config.logging.dashboard_event_file.clone();
 
     let state = Arc::new(AppState {
         config,
@@ -91,6 +94,7 @@ async fn main() {
         security_scanner,
         provider_router,
         rules_engine,
+        dashboard_event_file,
     });
 
     // ─── Build router ────────────────────────────────────────────────
@@ -102,6 +106,26 @@ async fn main() {
         .route(
             "/v1/chat/completions",
             post(routes::chat::chat_completions),
+        )
+        .route(
+            "/api/dashboard/summary",
+            get(routes::dashboard_api::dashboard_summary),
+        )
+        .route(
+            "/api/dashboard/traffic",
+            get(routes::dashboard_api::dashboard_traffic),
+        )
+        .route(
+            "/api/dashboard/models",
+            get(routes::dashboard_api::dashboard_models),
+        )
+        .route(
+            "/api/dashboard/security",
+            get(routes::dashboard_api::dashboard_security),
+        )
+        .route(
+            "/api/dashboard/events",
+            get(routes::dashboard_api::dashboard_events),
         )
         .route("/dashboard", get(routes::dashboard::dashboard_page))
         .route("/demo", get(routes::demo::demo_page))
@@ -165,7 +189,7 @@ async fn fallback_handler() -> (axum::http::StatusCode, Json<serde_json::Value>)
         axum::http::StatusCode::NOT_FOUND,
         Json(serde_json::json!({
             "error": {
-                "message": "Not found. Available endpoints: GET /, GET /demo, GET /dashboard, POST /v1/chat/completions, GET /health",
+                "message": "Not found. Available endpoints: GET /, GET /demo, GET /dashboard, GET /api/dashboard/{summary,traffic,models,security,events}, POST /v1/chat/completions, GET /health",
                 "type": "not_found_error",
                 "code": "404"
             }
