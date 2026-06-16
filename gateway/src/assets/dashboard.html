@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Samaryn Dashboard MVP</title>
+    <meta
+      name="description"
+      content="Dashboard MVP jujur untuk Samaryn v0.1: health, versi live, endpoint aktif, dan gap menuju v0.2."
+    />
+    <style>
+      :root {
+        --bg: #08111f;
+        --bg-soft: #0d1829;
+        --panel: rgba(15, 23, 42, 0.84);
+        --panel-strong: #0f1b2e;
+        --line: rgba(148, 163, 184, 0.18);
+        --line-strong: rgba(56, 189, 248, 0.3);
+        --text: #f8fafc;
+        --muted: #a8b3c7;
+        --subtle: #64748b;
+        --green: #22c55e;
+        --green-soft: rgba(34, 197, 94, 0.14);
+        --cyan: #38bdf8;
+        --cyan-soft: rgba(56, 189, 248, 0.12);
+        --amber: #f59e0b;
+        --amber-soft: rgba(245, 158, 11, 0.14);
+        --red: #ef4444;
+        --red-soft: rgba(239, 68, 68, 0.14);
+        --shadow: 0 28px 80px rgba(2, 6, 23, 0.42);
+        --radius-xl: 28px;
+        --radius-lg: 20px;
+        --radius-md: 14px;
+        --radius-sm: 10px;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top right, rgba(34, 197, 94, 0.1), transparent 24%),
+          radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 30%),
+          linear-gradient(180deg, #07101c 0%, #08111f 55%, #0a1422 100%);
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 44px 44px;
+        mask-image: radial-gradient(circle at center, black, transparent 88%);
+      }
+
+      a { color: inherit; text-decoration: none; }
+      .shell { width: min(1200px, calc(100% - 32px)); margin: 0 auto; }
+      .topbar {
+        position: sticky; top: 0; z-index: 10;
+        backdrop-filter: blur(14px);
+        background: rgba(8, 17, 31, 0.78);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+      }
+      .topbar-inner {
+        min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      }
+      .brand { display: inline-flex; align-items: center; gap: 12px; font-weight: 700; letter-spacing: -0.02em; }
+      .brand-mark {
+        width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px;
+        color: var(--green);
+        background: linear-gradient(180deg, rgba(34, 197, 94, 0.16), rgba(56, 189, 248, 0.12));
+        border: 1px solid rgba(34, 197, 94, 0.22);
+      }
+      .brand-copy { display: flex; flex-direction: column; gap: 2px; }
+      .brand-copy strong { font-size: 1rem; }
+      .brand-copy span { font-size: 0.8rem; color: var(--muted); }
+      .nav-links { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .nav-link, .button, .button-ghost {
+        display: inline-flex; align-items: center; justify-content: center; min-height: 44px;
+        padding: 0 16px; border-radius: 999px; border: 1px solid transparent; font-weight: 600;
+        transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
+      }
+      .nav-link { color: var(--muted); }
+      .nav-link:hover, .button:hover, .button-ghost:hover { transform: translateY(-1px); }
+      .nav-link:hover { color: var(--text); }
+      .button {
+        background: linear-gradient(180deg, var(--green), #16a34a);
+        color: #041109; box-shadow: 0 14px 30px rgba(34, 197, 94, 0.24);
+      }
+      .button-ghost {
+        border-color: rgba(56, 189, 248, 0.24); background: rgba(56, 189, 248, 0.08); color: var(--text);
+      }
+
+      main { padding: 48px 0 40px; }
+      .hero {
+        display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 24px; align-items: stretch;
+      }
+      .panel {
+        border-radius: var(--radius-xl); border: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.82), rgba(10, 18, 34, 0.94));
+        box-shadow: var(--shadow);
+      }
+      .hero-copy { padding: 32px; }
+      .kicker {
+        display: inline-flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 999px;
+        background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.18);
+        color: #c8f6d8; font-size: 0.92rem; margin-bottom: 18px;
+      }
+      .kicker::before {
+        content: ""; width: 9px; height: 9px; border-radius: 999px; background: var(--green);
+        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.12);
+      }
+      h1, h2, h3, p { margin: 0; }
+      h1 { font-size: clamp(2.6rem, 6vw, 4.6rem); line-height: 0.94; letter-spacing: -0.06em; max-width: 9ch; }
+      .hero-copy > p {
+        margin-top: 18px; color: var(--muted); line-height: 1.7; max-width: 58ch; font-size: 1.03rem;
+      }
+      .point-list {
+        margin-top: 24px; display: flex; flex-wrap: wrap; gap: 10px;
+      }
+      .point-list span {
+        display: inline-flex; align-items: center; min-height: 38px; padding: 0 14px; border-radius: 999px;
+        background: rgba(15, 23, 42, 0.68); border: 1px solid rgba(148, 163, 184, 0.14); color: #d7deea; font-size: 0.92rem;
+      }
+
+      .runtime-panel { padding: 24px; display: grid; gap: 16px; }
+      .status-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+      .status-chip {
+        display: inline-flex; align-items: center; min-height: 34px; padding: 0 12px; border-radius: 999px;
+        background: var(--amber-soft); border: 1px solid rgba(245, 158, 11, 0.24); color: #fde68a; font-size: 0.86rem;
+      }
+      .status-chip.ok { background: var(--green-soft); border-color: rgba(34, 197, 94, 0.22); color: #c8f6d8; }
+      .status-chip.error { background: var(--red-soft); border-color: rgba(239, 68, 68, 0.22); color: #fecaca; }
+      .metric-grid {
+        display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
+      }
+      .metric {
+        padding: 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.03); border: 1px solid rgba(148,163,184,0.1);
+      }
+      .metric-label { color: var(--muted); font-size: 0.84rem; text-transform: uppercase; letter-spacing: 0.08em; }
+      .metric-value { margin-top: 8px; font-size: 1.12rem; font-weight: 700; word-break: break-word; }
+      .metric-subtle { margin-top: 6px; color: var(--subtle); font-size: 0.9rem; line-height: 1.5; }
+
+      section { padding-top: 28px; }
+      .section-head { display: grid; gap: 10px; margin-bottom: 18px; }
+      .section-head h2 { font-size: clamp(1.9rem, 4vw, 3rem); line-height: 1; letter-spacing: -0.05em; }
+      .section-head p { color: var(--muted); line-height: 1.7; max-width: 64ch; }
+
+      .card-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+      .card {
+        grid-column: span 6; padding: 22px; border-radius: var(--radius-lg); border: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.78), rgba(10, 18, 34, 0.9)); box-shadow: var(--shadow);
+      }
+      .card h3 { font-size: 1.18rem; margin-bottom: 12px; }
+      .card p { color: var(--muted); line-height: 1.68; }
+      .stack { display: grid; gap: 12px; margin-top: 16px; }
+      .row {
+        display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 14px 16px;
+        border-radius: var(--radius-md); background: rgba(255,255,255,0.03); border: 1px solid rgba(148,163,184,0.08);
+      }
+      .row strong { display: block; margin-bottom: 4px; }
+      .row span { color: var(--muted); line-height: 1.55; }
+      .badge {
+        flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 30px; padding: 0 10px;
+        border-radius: 999px; font-size: 0.82rem; font-weight: 700;
+      }
+      .badge.done { background: var(--green-soft); color: #c8f6d8; border: 1px solid rgba(34, 197, 94, 0.22); }
+      .badge.pending { background: var(--amber-soft); color: #fde68a; border: 1px solid rgba(245, 158, 11, 0.22); }
+      .badge.missing { background: var(--red-soft); color: #fecaca; border: 1px solid rgba(239, 68, 68, 0.22); }
+
+      .endpoint-list {
+        list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 10px;
+      }
+      .endpoint-list li {
+        padding: 14px 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.03); border: 1px solid rgba(148,163,184,0.08);
+      }
+      .endpoint-list code { color: #d8f4ff; }
+      .notice {
+        margin-top: 16px; padding: 16px 18px; border-radius: var(--radius-md);
+        background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.16); color: #d8f4ff; line-height: 1.65;
+      }
+      footer { padding: 24px 0 40px; color: var(--subtle); font-size: 0.92rem; }
+      .footer-line { padding-top: 22px; border-top: 1px solid rgba(148, 163, 184, 0.12); }
+
+      @media (max-width: 960px) {
+        .hero, .metric-grid { grid-template-columns: 1fr; }
+        .card { grid-column: span 12; }
+      }
+      @media (max-width: 720px) {
+        .topbar-inner { align-items: flex-start; flex-direction: column; padding: 14px 0; }
+        .nav-links { width: 100%; }
+        .nav-link, .button, .button-ghost { width: 100%; }
+        main { padding-top: 32px; }
+        h1 { max-width: none; }
+        .point-list { flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="shell topbar-inner">
+        <a class="brand" href="/">
+          <span class="brand-mark">S</span>
+          <span class="brand-copy">
+            <strong>Samaryn</strong>
+            <span>Dashboard MVP</span>
+          </span>
+        </a>
+        <nav class="nav-links">
+          <a class="nav-link" href="/">Landing</a>
+          <a class="nav-link" href="/demo">Live Demo</a>
+          <a class="button-ghost" href="/health">Health JSON</a>
+          <button class="button" id="refresh-btn" type="button">Refresh Runtime</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section class="hero">
+        <article class="panel hero-copy">
+          <div class="kicker">Jujur soal state produk</div>
+          <h1>Samaryn masih v0.1, bukan dashboard enterprise penuh.</h1>
+          <p>
+            Halaman ini sengaja hanya menampilkan state runtime yang benar-benar ada sekarang:
+            health, versi live, endpoint aktif, dan gap yang masih tersisa menuju roadmap v0.2.
+          </p>
+          <div class="point-list">
+            <span>OpenAI-compatible gateway</span>
+            <span>Prompt injection & PII scan</span>
+            <span>Demo + landing live</span>
+            <span>Monitoring UI belum lengkap</span>
+          </div>
+        </article>
+
+        <aside class="panel runtime-panel">
+          <div class="status-head">
+            <div>
+              <div class="metric-label">Runtime status</div>
+              <div class="metric-value" id="runtime-title">Checking live gateway...</div>
+            </div>
+            <div class="status-chip" id="runtime-chip">LOADING</div>
+          </div>
+
+          <div class="metric-grid">
+            <div class="metric">
+              <div class="metric-label">Service</div>
+              <div class="metric-value" id="service-value">-</div>
+              <div class="metric-subtle">Dibaca langsung dari <code>/health</code>.</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Live version</div>
+              <div class="metric-value" id="version-value">-</div>
+              <div class="metric-subtle">Harus cocok dengan runtime, bukan asumsi roadmap.</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Current product tier</div>
+              <div class="metric-value">v0.1 core gateway</div>
+              <div class="metric-subtle">Landing + demo + gateway API.</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Last refresh</div>
+              <div class="metric-value" id="checked-at">-</div>
+              <div class="metric-subtle">Klik refresh untuk re-check runtime live.</div>
+            </div>
+          </div>
+
+          <div class="notice" id="runtime-note">
+            Memeriksa runtime Samaryn sekarang...
+          </div>
+        </aside>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2>Yang benar-benar tersedia sekarang</h2>
+          <p>
+            Ini bukan admin panel penuh. Ini MVP dashboard untuk menyelaraskan frontend dengan state backend v0.1.
+          </p>
+        </div>
+        <div class="card-grid">
+          <article class="card">
+            <h3>Live surfaces</h3>
+            <p>Permukaan yang memang aktif di gateway saat ini.</p>
+            <ul class="endpoint-list">
+              <li><code>GET /</code> — landing page produk</li>
+              <li><code>GET /demo</code> — interactive gateway demo</li>
+              <li><code>GET /dashboard</code> — halaman status MVP ini</li>
+              <li><code>GET /health</code> — health + version runtime</li>
+              <li><code>POST /v1/chat/completions</code> — OpenAI-compatible proxy</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <h3>Belum ada di v0.1</h3>
+            <p>Supaya tidak misleading, fitur ini belum saya klaim sebagai live UI.</p>
+            <div class="stack">
+              <div class="row">
+                <div>
+                  <strong>Dashboard monitoring & logs penuh</strong>
+                  <span>Belum ada log explorer, filter, atau drilldown request.</span>
+                </div>
+                <span class="badge missing">BELUM</span>
+              </div>
+              <div class="row">
+                <div>
+                  <strong>Analytics per model / user</strong>
+                  <span>Belum ada chart usage, token accounting, atau breakdown tenant.</span>
+                </div>
+                <span class="badge missing">BELUM</span>
+              </div>
+              <div>
+                <strong>RBAC / API keys / quota UI</strong>
+                <span>Masih gap ke v0.2; frontend admin belum tersedia.</span>
+              </div>
+              <span class="badge pending">ROADMAP</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2>Roadmap alignment</h2>
+          <p>Perbandingan jujur antara roadmap repo dan permukaan frontend yang bisa dilihat user sekarang.</p>
+        </div>
+        <div class="card-grid">
+          <article class="card">
+            <h3>v0.1 — sesuai</h3>
+            <div class="stack">
+              <div class="row">
+                <div>
+                  <strong>Core gateway</strong>
+                  <span>OpenAI-compatible proxy sudah ada.</span>
+                </div>
+                <span class="badge done">DONE</span>
+              </div>
+              <div class="row">
+                <div>
+                  <strong>Security filter</strong>
+                  <span>PII masking + prompt injection scan ada di flow gateway.</span>
+                </div>
+                <span class="badge done">DONE</span>
+              </div>
+              <div class="row">
+                <div>
+                  <strong>Frontend showcase</strong>
+                  <span>Landing + demo sekarang mendukung proof-of-concept v0.1.</span>
+                </div>
+                <span class="badge done">DONE</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <h3>v0.2 — belum lengkap</h3>
+            <div class="stack">
+              <div class="row">
+                <div>
+                  <strong>Monitoring dashboard</strong>
+                  <span>MVP ini baru status page, belum operator console penuh.</span>
+                </div>
+                <span class="badge pending">PARTIAL</span>
+              </div>
+              <div class="row">
+                <div>
+                  <strong>Analytics & usage metrics</strong>
+                  <span>Belum ada user/model analytics di UI.</span>
+                </div>
+                <span class="badge missing">MISSING</span>
+              </div>
+              <div class="row">
+                <div>
+                  <strong>Rule builder UI</strong>
+                  <span>Belum ada editor rules berbasis web.</span>
+                </div>
+                <span class="badge missing">MISSING</span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="shell">
+      <div class="footer-line">
+        Samaryn Dashboard MVP • status page untuk v0.1 runtime • jangan dianggap sebagai enterprise console penuh.
+      </div>
+    </footer>
+
+    <script>
+      const runtimeChip = document.getElementById("runtime-chip");
+      const runtimeTitle = document.getElementById("runtime-title");
+      const serviceValue = document.getElementById("service-value");
+      const versionValue = document.getElementById("version-value");
+      const checkedAt = document.getElementById("checked-at");
+      const runtimeNote = document.getElementById("runtime-note");
+      const refreshBtn = document.getElementById("refresh-btn");
+
+      async function refreshRuntime() {
+        runtimeChip.textContent = "LOADING";
+        runtimeChip.className = "status-chip";
+        runtimeTitle.textContent = "Checking live gateway...";
+        runtimeNote.textContent = "Memeriksa runtime Samaryn sekarang...";
+
+        try {
+          const response = await fetch("/health", { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          const body = await response.json();
+          const healthy = body?.status === "healthy";
+          runtimeChip.textContent = healthy ? "LIVE HEALTHY" : "UNHEALTHY";
+          runtimeChip.className = healthy ? "status-chip ok" : "status-chip error";
+          runtimeTitle.textContent = healthy ? "Gateway live dan merespons." : "Gateway merespons tapi status bukan healthy.";
+          serviceValue.textContent = body?.service || "-";
+          versionValue.textContent = body?.version || "-";
+          checkedAt.textContent = new Date().toLocaleTimeString();
+          runtimeNote.textContent = healthy
+            ? `Runtime live saat ini berada di versi ${body.version}. Ini menegaskan frontend masih duduk di atas state produk v0.1.`
+            : "Gateway menjawab, tapi status runtime perlu dicek lagi.";
+        } catch (error) {
+          runtimeChip.textContent = "ERROR";
+          runtimeChip.className = "status-chip error";
+          runtimeTitle.textContent = "Tidak bisa membaca runtime live.";
+          serviceValue.textContent = "-";
+          versionValue.textContent = "-";
+          checkedAt.textContent = new Date().toLocaleTimeString();
+          runtimeNote.textContent = `Health check gagal: ${String(error)}`;
+        }
+      }
+
+      refreshBtn.addEventListener("click", refreshRuntime);
+      refreshRuntime();
+    </script>
+  </body>
+</html>

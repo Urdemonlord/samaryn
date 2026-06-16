@@ -103,6 +103,7 @@ async fn main() {
             "/v1/chat/completions",
             post(routes::chat::chat_completions),
         )
+        .route("/dashboard", get(routes::dashboard::dashboard_page))
         .route("/demo", get(routes::demo::demo_page))
         .route("/health", get(routes::health::health_check))
         // Fallback 404
@@ -164,7 +165,7 @@ async fn fallback_handler() -> (axum::http::StatusCode, Json<serde_json::Value>)
         axum::http::StatusCode::NOT_FOUND,
         Json(serde_json::json!({
             "error": {
-                "message": "Not found. Available endpoints: GET /, GET /demo, POST /v1/chat/completions, GET /health",
+                "message": "Not found. Available endpoints: GET /, GET /demo, GET /dashboard, POST /v1/chat/completions, GET /health",
                 "type": "not_found_error",
                 "code": "404"
             }
