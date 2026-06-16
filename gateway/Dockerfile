@@ -29,8 +29,9 @@ USER appuser
 
 WORKDIR /app
 
-# Copy the compiled binary
+# Copy the compiled binary and runtime config
 COPY --from=builder /app/target/release/samaryn-gateway .
+COPY config/ config/
 
 EXPOSE 8080
 

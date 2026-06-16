@@ -27,6 +27,18 @@ fn normalize_model_for_provider(provider_name: &str, model: &str) -> String {
         return "openrouter/free".to_string();
     }
 
+    if provider_name == "meowlabs" {
+        if let Some(stripped) = model.strip_prefix("meowlabs/") {
+            return stripped.to_string();
+        }
+    }
+
+    if provider_name == "gemini" {
+        if let Some(stripped) = model.strip_prefix("gemini/") {
+            return stripped.to_string();
+        }
+    }
+
     if model.contains('/') {
         return model.to_string();
     }
