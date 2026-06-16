@@ -161,6 +161,15 @@ The local model bundle is expected under `ml-service/models/indobert-agentwa/` a
 - `tokenizer_config.json`
 - `training_metadata.json`
 
+For CI/CD and VPS deploys, `model.onnx` is **not committed to git**. GitHub Actions downloads it from a GitHub Release asset before building the ML image. By default the workflow expects release assets named:
+- `model.onnx`
+- `model.onnx.sha256`
+
+Optional GitHub Actions repository variables:
+- `SAMARYN_MODEL_RELEASE_TAG` — pin the model to a specific release tag; if unset, the latest release is used
+- `SAMARYN_MODEL_ASSET_NAME` — override the ONNX asset filename (default `model.onnx`)
+- `SAMARYN_MODEL_CHECKSUM_ASSET_NAME` — override the checksum asset filename (default `model.onnx.sha256`)
+
 ---
 
 ## Contributing

@@ -7,9 +7,16 @@ on:
         description: 'Commit SHA, tag, or branch to rollback to'
         required: true
         type: string
+      model_release_tag:
+        description: 'Optional GitHub release tag for the matching model artifact (defaults to repo variable or latest release)'
+        required: false
+        type: string
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
 
 jobs:
   rollback:
@@ -22,6 +29,14 @@ jobs:
         with:
           ref: ${{ inputs.commit }}
           fetch-depth: 0
+
+      - name: Download model release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SAMARYN_MODEL_RELEASE_TAG: ${{ inputs.model_release_tag || vars.SAMARYN_MODEL_RELEASE_TAG }}
+          SAMARYN_MODEL_ASSET_NAME: ${{ vars.SAMARYN_MODEL_ASSET_NAME || 'model.onnx' }}
+          SAMARYN_MODEL_CHECKSUM_ASSET_NAME: ${{ vars.SAMARYN_MODEL_CHECKSUM_ASSET_NAME || 'model.onnx.sha256' }}
+        run: bash ops/fetch-model-release-asset.sh
 
       - name: Build gateway image
         run: docker build -t samaryn-src-gateway:latest ./gateway
@@ -36,6 +51,7 @@ jobs:
           tar -czf samaryn-release.tgz \
             samaryn-gateway-image.tar.gz \
             samaryn-ml-service-image.tar.gz \
+            ops/fetch-model-release-asset.sh \
             ops/deploy-vps.sh
 
       - name: Start SSH agent
