@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Samaryn Dashboard MVP</title>
+    <title>Samaryn Dashboard</title>
     <meta
       name="description"
-      content="Dashboard MVP jujur untuk Samaryn v0.1: health, versi live, endpoint aktif, dan gap menuju v0.2."
+      content="Samaryn dashboard untuk status runtime, versi live, endpoint aktif, dan roadmap delivery."
     />
     <style>
       :root {
@@ -208,7 +208,7 @@
           <span class="brand-mark">S</span>
           <span class="brand-copy">
             <strong>Samaryn</strong>
-            <span>Dashboard MVP</span>
+            <span>Runtime Overview</span>
           </span>
         </a>
         <nav class="nav-links">
@@ -223,17 +223,16 @@
     <main class="shell">
       <section class="hero">
         <article class="panel hero-copy">
-          <div class="kicker">Jujur soal state produk</div>
-          <h1>Samaryn masih v0.1, bukan dashboard enterprise penuh.</h1>
+          <div class="kicker">Runtime Overview</div>
+          <h1>Samaryn Gateway Dashboard</h1>
           <p>
-            Halaman ini sengaja hanya menampilkan state runtime yang benar-benar ada sekarang:
-            health, versi live, endpoint aktif, dan gap yang masih tersisa menuju roadmap v0.2.
+            Status runtime, versi live, endpoint aktif, dan roadmap delivery untuk Samaryn Gateway.
           </p>
           <div class="point-list">
             <span>OpenAI-compatible gateway</span>
             <span>Prompt injection & PII scan</span>
-            <span>Demo + landing live</span>
-            <span>Monitoring UI belum lengkap</span>
+            <span>Landing, demo, and dashboard</span>
+            <span>Live health and version</span>
           </div>
         </article>
 
@@ -255,69 +254,71 @@
             <div class="metric">
               <div class="metric-label">Live version</div>
               <div class="metric-value" id="version-value">-</div>
-              <div class="metric-subtle">Harus cocok dengan runtime, bukan asumsi roadmap.</div>
+              <div class="metric-subtle">Version sourced directly from the live health endpoint.</div>
             </div>
             <div class="metric">
-              <div class="metric-label">Current product tier</div>
-              <div class="metric-value">v0.1 core gateway</div>
-              <div class="metric-subtle">Landing + demo + gateway API.</div>
+              <div class="metric-label">Current release</div>
+              <div class="metric-value">v0.1 gateway</div>
+              <div class="metric-subtle">Landing, demo, dashboard, and gateway API.</div>
             </div>
             <div class="metric">
               <div class="metric-label">Last refresh</div>
               <div class="metric-value" id="checked-at">-</div>
-              <div class="metric-subtle">Klik refresh untuk re-check runtime live.</div>
+              <div class="metric-subtle">Use refresh to pull the latest runtime state.</div>
             </div>
           </div>
 
           <div class="notice" id="runtime-note">
-            Memeriksa runtime Samaryn sekarang...
+            Checking Samaryn runtime...
           </div>
         </aside>
       </section>
 
       <section>
         <div class="section-head">
-          <h2>Yang benar-benar tersedia sekarang</h2>
+          <h2>Available surfaces</h2>
           <p>
-            Ini bukan admin panel penuh. Ini MVP dashboard untuk menyelaraskan frontend dengan state backend v0.1.
+            Active routes and interfaces currently exposed by the gateway.
           </p>
         </div>
         <div class="card-grid">
           <article class="card">
             <h3>Live surfaces</h3>
-            <p>Permukaan yang memang aktif di gateway saat ini.</p>
+            <p>Current interfaces exposed by the live gateway.</p>
             <ul class="endpoint-list">
-              <li><code>GET /</code> — landing page produk</li>
-              <li><code>GET /demo</code> — interactive gateway demo</li>
-              <li><code>GET /dashboard</code> — halaman status MVP ini</li>
-              <li><code>GET /health</code> — health + version runtime</li>
-              <li><code>POST /v1/chat/completions</code> — OpenAI-compatible proxy</li>
+              <li><code>GET /</code> - product landing page</li>
+              <li><code>GET /demo</code> - interactive gateway demo</li>
+              <li><code>GET /dashboard</code> - runtime dashboard</li>
+              <li><code>GET /health</code> - health and live version</li>
+              <li><code>POST /v1/chat/completions</code> - OpenAI-compatible proxy</li>
             </ul>
           </article>
 
           <article class="card">
-            <h3>Belum ada di v0.1</h3>
-            <p>Supaya tidak misleading, fitur ini belum saya klaim sebagai live UI.</p>
+            <h3>Planned next</h3>
+            <p>Capabilities tracked for the next delivery stages.</p>
             <div class="stack">
               <div class="row">
                 <div>
-                  <strong>Dashboard monitoring & logs penuh</strong>
-                  <span>Belum ada log explorer, filter, atau drilldown request.</span>
+                  <strong>Monitoring dashboard and logs</strong>
+                  <span>Request explorer, filtering, and log drilldown.</span>
                 </div>
-                <span class="badge missing">BELUM</span>
+                <span class="badge pending">PLANNED</span>
               </div>
               <div class="row">
                 <div>
-                  <strong>Analytics per model / user</strong>
-                  <span>Belum ada chart usage, token accounting, atau breakdown tenant.</span>
+                  <strong>Analytics by model and tenant</strong>
+                  <span>Usage charts, token accounting, and traffic breakdown.</span>
                 </div>
-                <span class="badge missing">BELUM</span>
+                <span class="badge pending">PLANNED</span>
               </div>
-              <div>
-                <strong>RBAC / API keys / quota UI</strong>
-                <span>Masih gap ke v0.2; frontend admin belum tersedia.</span>
+              <div class="row">
+                <div>
+                  <strong>Access control and quota management</strong>
+                  <span>RBAC, API key controls, and quota administration.</span>
+                </div>
+                <span class="badge pending">PLANNED</span>
               </div>
-              <span class="badge pending">ROADMAP</span>
             </div>
           </article>
         </div>
@@ -326,30 +327,30 @@
       <section>
         <div class="section-head">
           <h2>Roadmap alignment</h2>
-          <p>Perbandingan jujur antara roadmap repo dan permukaan frontend yang bisa dilihat user sekarang.</p>
+          <p>Current delivery status mapped against the Samaryn product roadmap.</p>
         </div>
         <div class="card-grid">
           <article class="card">
-            <h3>v0.1 — sesuai</h3>
+            <h3>v0.1 delivered</h3>
             <div class="stack">
               <div class="row">
                 <div>
                   <strong>Core gateway</strong>
-                  <span>OpenAI-compatible proxy sudah ada.</span>
+                  <span>OpenAI-compatible proxy is active.</span>
                 </div>
                 <span class="badge done">DONE</span>
               </div>
               <div class="row">
                 <div>
                   <strong>Security filter</strong>
-                  <span>PII masking + prompt injection scan ada di flow gateway.</span>
+                  <span>PII masking and prompt injection scanning are in the request flow.</span>
                 </div>
                 <span class="badge done">DONE</span>
               </div>
               <div class="row">
                 <div>
-                  <strong>Frontend showcase</strong>
-                  <span>Landing + demo sekarang mendukung proof-of-concept v0.1.</span>
+                  <strong>Frontend surfaces</strong>
+                  <span>Landing, demo, and dashboard are live.</span>
                 </div>
                 <span class="badge done">DONE</span>
               </div>
@@ -357,26 +358,26 @@
           </article>
 
           <article class="card">
-            <h3>v0.2 — belum lengkap</h3>
+            <h3>v0.2 in progress</h3>
             <div class="stack">
               <div class="row">
                 <div>
                   <strong>Monitoring dashboard</strong>
-                  <span>MVP ini baru status page, belum operator console penuh.</span>
+                  <span>Current dashboard covers runtime status. Full operator console is planned.</span>
                 </div>
                 <span class="badge pending">PARTIAL</span>
               </div>
               <div class="row">
                 <div>
                   <strong>Analytics & usage metrics</strong>
-                  <span>Belum ada user/model analytics di UI.</span>
+                  <span>Model and tenant analytics are not yet exposed in the UI.</span>
                 </div>
                 <span class="badge missing">MISSING</span>
               </div>
               <div class="row">
                 <div>
                   <strong>Rule builder UI</strong>
-                  <span>Belum ada editor rules berbasis web.</span>
+                  <span>Web-based policy and rules editing is not yet available.</span>
                 </div>
                 <span class="badge missing">MISSING</span>
               </div>
@@ -388,7 +389,7 @@
 
     <footer class="shell">
       <div class="footer-line">
-        Samaryn Dashboard MVP • status page untuk v0.1 runtime • jangan dianggap sebagai enterprise console penuh.
+        Samaryn Dashboard - runtime status, live version, active routes, and roadmap delivery.
       </div>
     </footer>
 
@@ -405,7 +406,7 @@
         runtimeChip.textContent = "LOADING";
         runtimeChip.className = "status-chip";
         runtimeTitle.textContent = "Checking live gateway...";
-        runtimeNote.textContent = "Memeriksa runtime Samaryn sekarang...";
+        runtimeNote.textContent = "Checking Samaryn runtime...";
 
         try {
           const response = await fetch("/health", { cache: "no-store" });
@@ -417,21 +418,21 @@
           const healthy = body?.status === "healthy";
           runtimeChip.textContent = healthy ? "LIVE HEALTHY" : "UNHEALTHY";
           runtimeChip.className = healthy ? "status-chip ok" : "status-chip error";
-          runtimeTitle.textContent = healthy ? "Gateway live dan merespons." : "Gateway merespons tapi status bukan healthy.";
+          runtimeTitle.textContent = healthy ? "Gateway is live and responding." : "Gateway responded with a non-healthy status.";
           serviceValue.textContent = body?.service || "-";
           versionValue.textContent = body?.version || "-";
           checkedAt.textContent = new Date().toLocaleTimeString();
           runtimeNote.textContent = healthy
-            ? `Runtime live saat ini berada di versi ${body.version}. Ini menegaskan frontend masih duduk di atas state produk v0.1.`
-            : "Gateway menjawab, tapi status runtime perlu dicek lagi.";
+            ? `Live runtime is currently on version ${body.version}.`
+            : "Gateway responded, but the runtime status needs attention.";
         } catch (error) {
           runtimeChip.textContent = "ERROR";
           runtimeChip.className = "status-chip error";
-          runtimeTitle.textContent = "Tidak bisa membaca runtime live.";
+          runtimeTitle.textContent = "Unable to read live runtime.";
           serviceValue.textContent = "-";
           versionValue.textContent = "-";
           checkedAt.textContent = new Date().toLocaleTimeString();
-          runtimeNote.textContent = `Health check gagal: ${String(error)}`;
+          runtimeNote.textContent = `Health check failed: ${String(error)}`;
         }
       }
 
