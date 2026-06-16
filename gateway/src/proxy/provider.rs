@@ -27,7 +27,9 @@ impl ProviderRouter {
     /// Matching logic:
     /// 1. Check each provider's `models` list for an exact match.
     /// 2. Check each provider's `models` list for a prefix match (e.g., "gpt-" matches "gpt-4o").
-    /// 3. If no match found, default to the first configured provider.
+    /// 3. If the model matched one or more providers but all matched providers are
+    ///    unavailable, return an explicit error instead of silently rerouting.
+    /// 4. If no match found, default to the first configured provider.
     pub fn resolve(&self, model: &str) -> Result<&ProviderConfig, GatewayError> {
         if self.providers.is_empty() {
             return Err(GatewayError::Config(
@@ -35,11 +37,14 @@ impl ProviderRouter {
             ));
         }
 
+        let mut unavailable_matches: Vec<String> = Vec::new();
+
         // First pass: exact match
         for provider in &self.providers {
             for supported_model in &provider.models {
                 if supported_model == model {
                     if !provider_is_available(provider) {
+                        unavailable_matches.push(provider.name.clone());
                         debug!(
                             model = %model,
                             provider = %provider.name,
@@ -62,6 +67,9 @@ impl ProviderRouter {
             for supported_model in &provider.models {
                 if model.starts_with(supported_model.as_str()) {
                     if !provider_is_available(provider) {
+                        if !unavailable_matches.contains(&provider.name) {
+                            unavailable_matches.push(provider.name.clone());
+                        }
                         debug!(
                             model = %model,
                             provider = %provider.name,
@@ -81,8 +89,20 @@ impl ProviderRouter {
             }
         }
 
+        if !unavailable_matches.is_empty() {
+            let providers = unavailable_matches.join(", ");
+            return Err(GatewayError::ProviderUnavailable(format!(
+                "No active credentials for providers matching model '{}': {}",
+                model, providers
+            )));
+        }
+
         // Default to the first available provider (for custom/local models)
-        if let Some(default_provider) = self.providers.iter().find(|provider| provider_is_available(provider)) {
+        if let Some(default_provider) = self
+            .providers
+            .iter()
+            .find(|provider| provider_is_available(provider))
+        {
             debug!(
                 model = %model,
                 provider = %default_provider.name,
@@ -164,5 +184,60 @@ mod tests {
     fn test_empty_providers() {
         let router = ProviderRouter::new(vec![]);
         assert!(router.resolve("gpt-4o").is_err());
+    }
+
+    #[test]
+    fn test_matching_provider_without_credentials_returns_error() {
+        let router = ProviderRouter::new(vec![
+            ProviderConfig {
+                name: "meowlabs".to_string(),
+                base_url: "https://api.meowlabs.store/v1".to_string(),
+                api_key: "sk-test-meowlabs".to_string(),
+                models: vec!["kr/auto".to_string()],
+            },
+            ProviderConfig {
+                name: "anthropic".to_string(),
+                base_url: "https://api.anthropic.com".to_string(),
+                api_key: String::new(),
+                models: vec!["claude-sonnet-4-20250514".to_string()],
+            },
+            ProviderConfig {
+                name: "openrouter".to_string(),
+                base_url: "https://openrouter.ai/api/v1".to_string(),
+                api_key: String::new(),
+                models: vec!["claude-".to_string()],
+            },
+        ]);
+
+        let err = router.resolve("claude-sonnet-4-20250514").unwrap_err();
+        match err {
+            GatewayError::ProviderUnavailable(message) => {
+                assert!(message.contains("claude-sonnet-4-20250514"));
+                assert!(message.contains("anthropic"));
+                assert!(message.contains("openrouter"));
+            }
+            other => panic!("unexpected error: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_unknown_model_still_falls_back_to_first_available_provider() {
+        let router = ProviderRouter::new(vec![
+            ProviderConfig {
+                name: "meowlabs".to_string(),
+                base_url: "https://api.meowlabs.store/v1".to_string(),
+                api_key: "sk-test-meowlabs".to_string(),
+                models: vec!["kr/auto".to_string()],
+            },
+            ProviderConfig {
+                name: "openrouter".to_string(),
+                base_url: "https://openrouter.ai/api/v1".to_string(),
+                api_key: String::new(),
+                models: vec!["claude-".to_string()],
+            },
+        ]);
+
+        let provider = router.resolve("some-unknown-model").unwrap();
+        assert_eq!(provider.name, "meowlabs");
     }
 }

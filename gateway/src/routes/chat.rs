@@ -272,7 +272,40 @@ pub async fn chat_completions(
         }
     }
 
-    let provider = state.provider_router.resolve(&model)?;
+    let provider = match state.provider_router.resolve(&model) {
+        Ok(provider) => provider,
+        Err(error) => {
+            let status = match &error {
+                GatewayError::ProviderUnavailable(_) => 503,
+                GatewayError::Config(_) => 500,
+                GatewayError::BadRequest(_) => 400,
+                GatewayError::MlService(_) => 503,
+                GatewayError::SecurityViolation { .. } => 403,
+                GatewayError::Upstream(_) => 502,
+            };
+
+            write_dashboard_event(
+                &state,
+                build_dashboard_event(
+                    &request_id,
+                    "/v1/chat/completions",
+                    "POST",
+                    Some(model.clone()),
+                    None,
+                    Some(status),
+                    Some(elapsed_ms(request_started)),
+                    DashboardVerdict::UpstreamError,
+                    pii_entities_redacted,
+                    Some(error.to_string()),
+                    None,
+                    None,
+                    vec![],
+                ),
+            );
+
+            return Err(error);
+        }
+    };
     let provider_name = provider.name.clone();
     let upstream_model = normalize_model_for_provider(&provider_name, &model);
     if upstream_model != model {

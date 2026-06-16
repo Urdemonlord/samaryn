@@ -27,6 +27,11 @@ pub enum GatewayError {
     #[error("Configuration error: {0}")]
     Config(String),
 
+    /// The requested model matched a provider route, but no matching provider
+    /// has active credentials in the current runtime.
+    #[error("Provider unavailable: {0}")]
+    ProviderUnavailable(String),
+
     /// Error communicating with the ML scanning service.
     #[error("ML service error: {0}")]
     MlService(String),
@@ -53,6 +58,11 @@ impl IntoResponse for GatewayError {
             GatewayError::Config(msg) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "config_error", msg.clone())
             }
+            GatewayError::ProviderUnavailable(msg) => (
+                StatusCode::SERVICE_UNAVAILABLE,
+                "provider_unavailable",
+                msg.clone(),
+            ),
             GatewayError::MlService(msg) => {
                 (StatusCode::SERVICE_UNAVAILABLE, "ml_service_error", msg.clone())
             }
