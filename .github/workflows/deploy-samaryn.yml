@@ -74,10 +74,13 @@ jobs:
 
       - name: Run remote deploy
         id: deploy
+        env:
+          MEOWLABS_API_KEY: ${{ secrets.MEOWLABS_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           ssh -p "${{ secrets.SAMARYN_VPS_PORT || 22 }}" \
             "${{ secrets.SAMARYN_VPS_USER }}@${{ secrets.SAMARYN_VPS_HOST }}" \
-            'rm -rf /tmp/samaryn-bootstrap && mkdir -p /tmp/samaryn-bootstrap && tar -xzf /tmp/samaryn-release.tgz -C /tmp/samaryn-bootstrap ops/deploy-vps.sh && bash /tmp/samaryn-bootstrap/ops/deploy-vps.sh /tmp/samaryn-release.tgz'
+            "export MEOWLABS_API_KEY=$(printf %q \"$MEOWLABS_API_KEY\"); export GEMINI_API_KEY=$(printf %q \"$GEMINI_API_KEY\"); rm -rf /tmp/samaryn-bootstrap && mkdir -p /tmp/samaryn-bootstrap && tar -xzf /tmp/samaryn-release.tgz -C /tmp/samaryn-bootstrap ops/deploy-vps.sh && bash /tmp/samaryn-bootstrap/ops/deploy-vps.sh /tmp/samaryn-release.tgz"
 
       - name: Notify Telegram
         if: always()
