@@ -767,18 +767,18 @@
             <div class="toolbar">
               <div>
                 <span class="label" style="margin-top: 18px;">Route model</span>
-                <span class="field-note">MeowLabs route sekarang expose beberapa model nyata: Claude Sonnet, DeepSeek, GLM, Qwen, plus Gemini direct untuk pembanding.</span>
+                <span class="field-note">Nama model sekarang ikut ID live dari route MeowLabs: Claude Sonnet, DeepSeek, GLM, Qwen, plus Gemini direct untuk pembanding.</span>
               </div>
               <select id="model-select" aria-label="Route model">
                 <optgroup label="MeowLabs routes">
-                  <option value="meowlabs/kr/claude-sonnet-4.5">meowlabs/kr/claude-sonnet-4.5</option>
-                  <option value="meowlabs/kr/deepseek-3.2">meowlabs/kr/deepseek-3.2</option>
-                  <option value="meowlabs/kr/glm-5">meowlabs/kr/glm-5</option>
-                  <option value="meowlabs/kr/qwen3-coder-next">meowlabs/kr/qwen3-coder-next</option>
-                  <option value="meowlabs/gemini-2.5-flash">meowlabs/gemini-2.5-flash</option>
+                  <option value="meowlabs/kr/claude-sonnet-4.5">MeowLabs · Claude Sonnet 4.5 (kr/claude-sonnet-4.5)</option>
+                  <option value="meowlabs/kr/deepseek-3.2">MeowLabs · DeepSeek 3.2 (kr/deepseek-3.2)</option>
+                  <option value="meowlabs/kr/glm-5">MeowLabs · GLM-5 (kr/glm-5)</option>
+                  <option value="meowlabs/kr/qwen3-coder-next">MeowLabs · Qwen3 Coder Next (kr/qwen3-coder-next)</option>
+                  <option value="meowlabs/gemini-2.5-flash">MeowLabs · Gemini 2.5 Flash (gemini-2.5-flash)</option>
                 </optgroup>
                 <optgroup label="Direct provider route">
-                  <option value="gemini/gemini-2.5-flash">gemini/gemini-2.5-flash</option>
+                  <option value="gemini/gemini-2.5-flash">Direct Gemini · Gemini 2.5 Flash (gemini/gemini-2.5-flash)</option>
                 </optgroup>
               </select>
             </div>
@@ -998,6 +998,70 @@
         }
       }
 
+      function inferProviderFromModel(model) {
+        if (!model) return "-";
+        if (model.startsWith("gemini/")) return "gemini";
+        if (model.startsWith("kr/") || model === "gemini-2.5-flash") return "meowlabs";
+        if (model.startsWith("meowlabs/")) return "meowlabs";
+        return "resolved by gateway";
+      }
+
+      function parseSsePayload(rawText) {
+        const chunks = [];
+        let combinedContent = "";
+        let lastChunk = null;
+
+        for (const block of rawText.split(/\n\n+/)) {
+          const lines = block
+            .split("\n")
+            .filter((line) => line.startsWith("data:"))
+            .map((line) => line.slice(5).trim())
+            .filter(Boolean);
+
+          for (const line of lines) {
+            if (line === "[DONE]") {
+              continue;
+            }
+
+            try {
+              const parsed = JSON.parse(line);
+              chunks.push(parsed);
+              lastChunk = parsed;
+              const deltaContent = parsed?.choices?.[0]?.delta?.content;
+              if (deltaContent) {
+                combinedContent += deltaContent;
+              }
+            } catch (error) {
+              return { raw: rawText };
+            }
+          }
+        }
+
+        if (!chunks.length) {
+          return { raw: rawText };
+        }
+
+        const firstChunk = chunks[0];
+        return {
+          id: lastChunk?.id || firstChunk?.id,
+          object: "chat.completion",
+          created: lastChunk?.created || firstChunk?.created,
+          model: lastChunk?.model || firstChunk?.model,
+          choices: [
+            {
+              index: 0,
+              finish_reason: lastChunk?.choices?.[0]?.finish_reason || "stop",
+              message: {
+                role: "assistant",
+                content: combinedContent || ""
+              }
+            }
+          ],
+          usage: lastChunk?.usage,
+          chunks
+        };
+      }
+
       async function runDemo() {
         sendBtn.disabled = true;
         resetBtn.disabled = true;
@@ -1025,19 +1089,24 @@
           });
 
           const rawText = await response.text();
+          const contentType = response.headers.get("content-type") || "";
           let body = {};
           if (rawText) {
             try {
               body = JSON.parse(rawText);
             } catch (error) {
-              body = { raw: rawText };
+              if (contentType.includes("text/event-stream") || rawText.includes("data:")) {
+                body = parseSsePayload(rawText);
+              } else {
+                body = { raw: rawText };
+              }
             }
           }
           const elapsed = Math.round(performance.now() - startedAt);
           const decision = inferDecision(response.status, body);
 
           setDecision(decision.kind, decision.detail);
-          providerValue.textContent = body.provider || (response.status === 200 ? "Forwarded" : "Not forwarded");
+          providerValue.textContent = body.provider || inferProviderFromModel(modelSelect.value);
           modelValue.textContent = body.model || modelSelect.value;
           latencyValue.textContent = `${elapsed} ms`;
           statusText.textContent = `HTTP ${response.status}`;

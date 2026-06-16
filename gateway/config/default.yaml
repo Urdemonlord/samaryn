@@ -20,7 +20,9 @@ providers:
     models:
       - "meowlabs/"
       - "kr/claude-haiku-4.5"
+      - "kr/claude-sonnet-4.5"
       - "kr/glm-5"
+      - "kr/qwen3-coder-next"
       - "kr/auto"
       - "kr/deepseek-3.2"
       - "kr/minimax-m2.1"
