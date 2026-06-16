@@ -207,7 +207,7 @@ async fn shutdown_signal() {
 
 /// Print the startup ASCII art banner.
 fn print_banner() {
-    let banner = r#"
+    let banner = format!(r#"
   ____                                        
  / ___|  __ _ _ __ ___   __ _ _ __ _   _ _ __  
  \___ \ / _` | '_ ` _ \ / _` | '__| | | | '_ \ 
@@ -215,9 +215,9 @@ fn print_banner() {
  |____/ \__,_|_| |_| |_|\__,_|_|   \__, |_| |_|
                                      |___/       
     ╔══════════════════════════════════════╗
-    ║     AI Security Gateway v0.1.0      ║
+    ║     AI Security Gateway v{:<9}   ║
     ║   OpenAI-Compatible Reverse Proxy   ║
     ╚══════════════════════════════════════╝
-"#;
+"#, env!("CARGO_PKG_VERSION"));
     println!("{}", banner);
 }
