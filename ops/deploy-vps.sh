@@ -99,7 +99,7 @@ run_gateway() {
   [ -n "$anthropic_key" ] && cmd+=(-e "ANTHROPIC_API_KEY=$anthropic_key")
   [ -n "$gemini_key" ] && cmd+=(-e "GEMINI_API_KEY=$gemini_key")
   [ -n "$openrouter_key" ] && cmd+=(-e "OPENROUTER_API_KEY=$openrouter_key")
-  [ -n "$samaryn_auth_key" ] && cmd+=(-e "SAMARYN_AUTH_KEY=$samaryn_auth_key")
+  [ -n "$samaryn_auth_key" ] && cmd+=(-e "SAMARYN__AUTH_KEYS=$samaryn_auth_key")
 
   cmd+=("$image_ref")
   "${cmd[@]}" >/dev/null
