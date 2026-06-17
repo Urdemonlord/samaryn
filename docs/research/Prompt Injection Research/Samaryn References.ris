@@ -1,0 +1,262 @@
+TY  - JOUR
+TI  - BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding
+AU  - Devlin, Jacob
+AU  - Chang, Ming-Wei
+AU  - Lee, Kenton
+AU  - Toutanova, Kristina
+PY  - 2018
+Y1  - 2018/10/11
+JO  - arXiv preprint arXiv:1810.04805
+M3  - Preprint
+UR  - https://arxiv.org/abs/1810.04805
+L1  - https://arxiv.org/pdf/1810.04805
+N1  - arXiv:1810.04805
+ER  - 
+
+TY  - JOUR
+TI  - ReAct: Synergizing Reasoning and Acting in Language Models
+AU  - Yao, Shunyu
+AU  - Zhao, Jeffrey
+AU  - Yu, Dian
+AU  - Du, Nan
+AU  - Shafran, Izhak
+AU  - Narasimhan, Karthik
+AU  - Cao, Yuan
+PY  - 2022
+Y1  - 2022/10/06
+JO  - arXiv preprint arXiv:2210.03629
+M3  - Preprint
+UR  - https://arxiv.org/abs/2210.03629
+L1  - https://arxiv.org/pdf/2210.03629
+N1  - arXiv:2210.03629
+ER  - 
+
+TY  - JOUR
+TI  - Toolformer: Language Models Can Teach Themselves to Use Tools
+AU  - Schick, Timo
+AU  - Dwivedi-Yu, Jane
+AU  - Dessi, Roberto
+AU  - Raileanu, Roberta
+AU  - Lomeli, Maria
+AU  - Zettlemoyer, Luke
+AU  - Cancedda, Nicola
+AU  - Scialom, Thomas
+PY  - 2023
+Y1  - 2023/02/09
+JO  - arXiv preprint arXiv:2302.04761
+M3  - Preprint
+UR  - https://arxiv.org/abs/2302.04761
+L1  - https://arxiv.org/pdf/2302.04761
+N1  - arXiv:2302.04761
+ER  - 
+
+TY  - JOUR
+TI  - FrugalGPT: How to Use Large Language Models While Reducing Cost and Improving Performance
+AU  - Chen, Lingjiao
+AU  - Zaharia, Matei
+AU  - Zou, James
+PY  - 2023
+Y1  - 2023/05/09
+JO  - arXiv preprint arXiv:2305.05176
+M3  - Preprint
+UR  - https://arxiv.org/abs/2305.05176
+L1  - https://arxiv.org/pdf/2305.05176
+N1  - arXiv:2305.05176
+ER  - 
+
+TY  - JOUR
+TI  - A Survey on Large Language Model based Autonomous Agents
+AU  - Wang, Lei
+AU  - Ma, Chen
+AU  - Feng, Xueyang
+AU  - Zhang, Zeyu
+AU  - Yang, Hao
+AU  - Zhang, Jingsen
+AU  - Chen, Zhiyuan
+AU  - Tang, Jiakai
+AU  - Chen, Xu
+AU  - Lin, Yankai
+AU  - Zhao, Wayne Xin
+AU  - Wei, Zhewei
+AU  - Wen, Ji-Rong
+PY  - 2023
+Y1  - 2023/08/22
+JO  - arXiv preprint arXiv:2308.11432
+M3  - Preprint
+UR  - https://arxiv.org/abs/2308.11432
+L1  - https://arxiv.org/pdf/2308.11432
+N1  - arXiv:2308.11432
+ER  - 
+
+TY  - JOUR
+TI  - Formalizing and Benchmarking Prompt Injection Attacks and Defenses
+AU  - Liu, Yupei
+AU  - Jia, Yuqi
+AU  - Geng, Runpeng
+AU  - Jia, Jinyuan
+AU  - Gong, Neil Zhenqiang
+PY  - 2023
+Y1  - 2023/10/19
+JO  - arXiv preprint arXiv:2310.12815
+M3  - Preprint
+UR  - https://arxiv.org/abs/2310.12815
+L1  - https://arxiv.org/pdf/2310.12815
+N1  - arXiv:2310.12815
+ER  - 
+
+TY  - JOUR
+TI  - Benchmarking and Defending Against Indirect Prompt Injection Attacks on Large Language Models
+AU  - Yi, Jingwei
+AU  - Xie, Yueqi
+AU  - Zhu, Bin
+AU  - Kiciman, Emre
+AU  - Sun, Guangzhong
+AU  - Xie, Xing
+AU  - Wu, Fangzhao
+PY  - 2023
+Y1  - 2023/12/21
+JO  - arXiv preprint arXiv:2312.14197
+M3  - Preprint
+UR  - https://arxiv.org/abs/2312.14197
+L1  - https://arxiv.org/pdf/2312.14197
+N1  - arXiv:2312.14197
+ER  - 
+
+TY  - JOUR
+TI  - InjecAgent: Benchmarking Indirect Prompt Injections in Tool-Integrated Large Language Model Agents
+AU  - Zhan, Qiusi
+AU  - Liang, Zhixiang
+AU  - Ying, Zifan
+AU  - Kang, Daniel
+PY  - 2024
+Y1  - 2024/03/05
+JO  - arXiv preprint arXiv:2403.02691
+M3  - Preprint
+UR  - https://arxiv.org/abs/2403.02691
+L1  - https://arxiv.org/pdf/2403.02691
+N1  - arXiv:2403.02691
+ER  - 
+
+TY  - JOUR
+TI  - Controlling Out-of-Domain Gaps in LLMs for Genre Classification and Generated Text Detection
+AU  - Roussinov, Dmitri
+AU  - Sharoff, Serge
+AU  - Puchnina, Nadezhda
+PY  - 2024
+Y1  - 2024/12/29
+JO  - arXiv preprint arXiv:2412.20595
+M3  - Preprint
+UR  - https://arxiv.org/abs/2412.20595
+L1  - https://arxiv.org/pdf/2412.20595
+N1  - arXiv:2412.20595
+ER  - 
+
+TY  - JOUR
+TI  - LLMail-Inject: A Dataset from a Realistic Adaptive Prompt Injection Challenge
+AU  - Abdelnabi, Sahar
+AU  - Fay, Aideen
+AU  - Salem, Ahmed
+AU  - Zverev, Egor
+AU  - Liao, Kai-Chieh
+AU  - Liu, Chi-Huang
+AU  - Kuo, Chun-Chih
+AU  - Weigend, Jannis
+AU  - Manlangit, Danyael
+AU  - Apostolov, Alex
+AU  - Umair, Haris
+AU  - Donato, Joao
+AU  - Kawakita, Masayuki
+AU  - Mahboob, Athar
+AU  - Bach, Tran Huu
+AU  - Chiang, Tsun-Han
+AU  - Cho, Myeongjin
+AU  - Choi, Hajin
+AU  - Kim, Byeonghyeon
+AU  - Lee, Hyeonjin
+AU  - Pannell, Benjamin
+AU  - McCauley, Conor
+AU  - Russinovich, Mark
+AU  - Paverd, Andrew
+AU  - Cherubin, Giovanni
+PY  - 2025
+Y1  - 2025/06/11
+JO  - arXiv preprint arXiv:2506.09956
+M3  - Preprint
+UR  - https://arxiv.org/abs/2506.09956
+L1  - https://arxiv.org/pdf/2506.09956
+N1  - arXiv:2506.09956
+ER  - 
+
+TY  - JOUR
+TI  - MPIB: A Benchmark for Medical Prompt Injection Attacks and Clinical Safety in LLMs
+AU  - Lee, Junhyeok
+AU  - Jang, Han
+AU  - Choi, Kyu Sung
+PY  - 2026
+Y1  - 2026/02/06
+JO  - arXiv preprint arXiv:2602.06268
+M3  - Preprint
+UR  - https://arxiv.org/abs/2602.06268
+L1  - https://arxiv.org/pdf/2602.06268
+N1  - arXiv:2602.06268
+ER  - 
+
+TY  - JOUR
+TI  - Send a SCOUT First: Pre-hoc Reasoning for Adaptive Detector Allocation in Prompt-Injection Defense
+AU  - Zhang, Shuhao
+AU  - Li, Jiarui
+AU  - Cao, Qi
+AU  - Zhang, Ruiyi
+AU  - Xie, Pengtao
+PY  - 2026
+Y1  - 2026/05/29
+JO  - arXiv preprint arXiv:2605.30837
+M3  - Preprint
+UR  - https://arxiv.org/abs/2605.30837
+L1  - https://arxiv.org/pdf/2605.30837
+N1  - arXiv:2605.30837
+ER  - 
+
+TY  - JOUR
+TI  - From Prompt Injection to Persistent Control: Defending Agentic Harness Against Trojan Backdoors
+AU  - Tan, Jiejun
+AU  - Dou, Zhicheng
+AU  - Yang, Xinyu
+AU  - Hu, Yuyang
+AU  - Cheng, Yiruo
+AU  - Li, Xiaoxi
+AU  - Wen, Ji-Rong
+PY  - 2026
+Y1  - 2026/05/29
+JO  - arXiv preprint arXiv:2605.31042
+M3  - Preprint
+UR  - https://arxiv.org/abs/2605.31042
+L1  - https://arxiv.org/pdf/2605.31042
+N1  - arXiv:2605.31042
+ER  - 
+
+TY  - JOUR
+TI  - AgentRedBench: Dynamic Redteaming and Integration-Aware Defense for LLM Agents over SaaS Integrations
+AU  - Dingeto, Hiskias
+AU  - Leeney, William
+PY  - 2026
+Y1  - 2026/06/01
+JO  - arXiv preprint arXiv:2606.02240
+M3  - Preprint
+UR  - https://arxiv.org/abs/2606.02240
+L1  - https://arxiv.org/pdf/2606.02240
+N1  - arXiv:2606.02240
+ER  - 
+
+TY  - JOUR
+TI  - Gate AI: LLM Security Benchmark Evaluation Methodology and Results
+AU  - Goehausen, Ryle
+AU  - Sousa, Marcus
+PY  - 2026
+Y1  - 2026/06/01
+JO  - arXiv preprint arXiv:2606.02959
+M3  - Preprint
+UR  - https://arxiv.org/abs/2606.02959
+L1  - https://arxiv.org/pdf/2606.02959
+N1  - arXiv:2606.02959
+ER  - 

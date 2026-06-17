@@ -67,11 +67,18 @@ run_ml_service() {
 
 run_gateway() {
   local image_ref="$1"
-  local openai_key anthropic_key gemini_key openrouter_key
+  local meowlabs_key openai_key anthropic_key gemini_key openrouter_key
+  meowlabs_key="$(get_current_env_value "$GATEWAY_CONTAINER" MEOWLABS_API_KEY || true)"
   openai_key="$(get_current_env_value "$GATEWAY_CONTAINER" OPENAI_API_KEY || true)"
   anthropic_key="$(get_current_env_value "$GATEWAY_CONTAINER" ANTHROPIC_API_KEY || true)"
   gemini_key="$(get_current_env_value "$GATEWAY_CONTAINER" GEMINI_API_KEY || true)"
   openrouter_key="$(get_current_env_value "$GATEWAY_CONTAINER" OPENROUTER_API_KEY || true)"
+
+  [ -z "$meowlabs_key" ] && meowlabs_key="${MEOWLABS_API_KEY:-}"
+  [ -z "$openai_key" ] && openai_key="${OPENAI_API_KEY:-}"
+  [ -z "$anthropic_key" ] && anthropic_key="${ANTHROPIC_API_KEY:-}"
+  [ -z "$gemini_key" ] && gemini_key="${GEMINI_API_KEY:-}"
+  [ -z "$openrouter_key" ] && openrouter_key="${OPENROUTER_API_KEY:-}"
 
   docker rm -f "$GATEWAY_CONTAINER" >/dev/null 2>&1 || true
 
@@ -85,6 +92,7 @@ run_gateway() {
     -e SAMARYN__SERVER__PORT=8080
     -e RUST_LOG=info,tower_http=debug)
 
+  [ -n "$meowlabs_key" ] && cmd+=(-e "MEOWLABS_API_KEY=$meowlabs_key")
   [ -n "$openai_key" ] && cmd+=(-e "OPENAI_API_KEY=$openai_key")
   [ -n "$anthropic_key" ] && cmd+=(-e "ANTHROPIC_API_KEY=$anthropic_key")
   [ -n "$gemini_key" ] && cmd+=(-e "GEMINI_API_KEY=$gemini_key")

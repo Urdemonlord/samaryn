@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Samaryn Docs — Integration Guide</title>
+    <title>Samaryn Docs — IndoBERT Prompt Injection Detection</title>
     <meta
       name="description"
-      content="Dokumentasi integrasi Samaryn AI Security Gateway. Endpoint, authentication, model routing, code examples."
+      content="Dokumentasi Samaryn — model deteksi out-of-domain prompt injection berbasis IndoBERT. Integrasi cloud API dan self-host deployment."
     />
     <style>
       :root {
@@ -421,58 +421,127 @@
 
     <main class="shell">
       <div class="docs-header">
-        <h1>Samaryn API Documentation</h1>
+        <h1>Samaryn Documentation</h1>
         <p>
-          Integrate Samaryn into your application with a single endpoint.
-          Prompt injection detection, PII masking, and multi-provider routing —
-          no SDK required.
+          Samaryn adalah model deteksi out-of-domain prompt injection berbasis IndoBERT untuk Bahasa Indonesia.
+          Di-deploy sebagai gateway OpenAI-compatible yang siap dipakai via cloud atau self-host.
+          Dokumentasi ini mencakup model, arsitektur, integrasi API, dan deployment.
         </p>
       </div>
 
       <nav class="toc">
         <strong>Contents</strong>
         <ol>
-          <li><a href="#overview">Overview</a></li>
-          <li><a href="#quickstart">Quick Start</a></li>
+          <li><a href="#overview">Overview &amp; Architecture</a></li>
+          <li><a href="#model">The IndoBERT Model</a></li>
+          <li><a href="#quickstart">Quick Start — Cloud API</a></li>
           <li><a href="#authentication">Authentication</a></li>
-          <li><a href="#chat-completions">Chat Completions</a></li>
-          <li><a href="#model-routing">Model Routing</a></li>
-          <li><a href="#security">Security Features</a></li>
-          <li><a href="#examples">Code Examples</a></li>
+          <li><a href="#chat-completions">Chat Completions API</a></li>
+          <li><a href="#selfhost">Self-Host Deployment</a></li>
+          <li><a href="#decisions">Security Decisions</a></li>
           <li><a href="#errors">Error Handling</a></li>
         </ol>
       </nav>
 
       <!-- Overview -->
       <section class="doc-section" id="overview">
-        <h2>1. Overview</h2>
+        <h2>1. Overview &amp; Architecture</h2>
         <p>
-          Samaryn is an OpenAI-compatible reverse proxy that sits between your
-          application and LLM providers. Every request is inspected before being
-          forwarded — prompt injection is blocked, PII is masked, and traffic is
-          routed to the provider you choose.
+          Samaryn adalah <strong>model deteksi prompt injection berbasis IndoBERT</strong> yang dibungkus dalam
+          gateway OpenAI-compatible. Setiap request yang masuk melewati pipeline keamanan tiga lapis sebelum
+          diteruskan ke LLM tujuan.
         </p>
+
         <div class="doc-card">
-          <h3>Key capabilities</h3>
+          <h3>Pipeline arsitektur</h3>
           <p>
-            <span class="badge badge-green">Block</span> &nbsp;
-            Stop prompt injection, jailbreak attempts, and out-of-domain requests.
+            <strong>Layer 1 — Rule Engine:</strong> Pola eksplisit seperti instruksi override, exfiltration,
+            keyword ofensif, dan marker injection dikenal dengan latency hampir nol. Request yang cocok
+            langsung diblok tanpa memanggil model.
+          </p>
+          <p>
+            <strong>Layer 2 — IndoBERT Classifier:</strong> Request yang lolos rule engine diklasifikasi oleh
+            model IndoBERT ONNX ke dalam tiga kelas: <span class="inline-code">safe</span>,
+            <span class="inline-code">prompt_injection</span>, atau <span class="inline-code">out_of_domain</span>.
+          </p>
+          <p>
+            <strong>Layer 3 — Policy Decision:</strong> Berdasarkan output model, policy engine menentukan
+            tindakan: allow, block, mask, atau escalate. Keputusan dicatat untuk audit trail.
+          </p>
+        </div>
 
-            <span class="badge badge-cyan">Mask</span> &nbsp;
-            Redact emails, phone numbers, NIK, and other sensitive patterns.
-
-            <span class="badge badge-amber">Route</span> &nbsp;
-            Forward requests to any upstream provider through a single endpoint.
+        <div class="doc-card">
+          <h3>Cloud vs Self-Host</h3>
+          <p>
+            Samaryn bisa dipakai sebagai <strong>cloud endpoint</strong> di <span class="inline-code">samaryn.meowlabs.id</span>
+            atau <strong>di-self-host</strong> via Docker. Model IndoBERT sudah terbundle dalam image — 
+            tinggal jalankan dan hubungkan ke LLM atau chatbot yang ingin diamankan. Keduanya menggunakan
+            model deteksi yang identik.
           </p>
         </div>
       </section>
 
-      <!-- Quick Start -->
-      <section class="doc-section" id="quickstart">
-        <h2>2. Quick Start</h2>
+      <!-- The IndoBERT Model -->
+      <section class="doc-section" id="model">
+        <h2>2. The IndoBERT Model</h2>
         <p>
-          The fastest way to test Samaryn is with cURL. You'll need an API key
-          from your Samaryn deployment operator.
+          IndoBERT adalah varian BERT yang di-pre-train secara khusus untuk Bahasa Indonesia.
+          Samaryn melakukan fine-tuning IndoBERT untuk tugas klasifikasi tiga kelas, dengan output
+          berupa probabilitas untuk setiap kelas.
+        </p>
+
+        <div class="doc-card">
+          <h3>Skema klasifikasi</h3>
+          <table class="param-table">
+            <thead>
+              <tr>
+                <th>Kelas</th>
+                <th>Label</th>
+                <th>Deskripsi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="param-name">safe</td>
+                <td class="param-type">allow</td>
+                <td class="param-desc">Request normal dalam domain — diteruskan ke LLM tujuan.</td>
+              </tr>
+              <tr>
+                <td class="param-name">prompt_injection</td>
+                <td class="param-type">block</td>
+                <td class="param-desc">Mengandung instruksi manipulatif, override, atau eksfiltrasi — diblokir.</td>
+              </tr>
+              <tr>
+                <td class="param-name">out_of_domain</td>
+                <td class="param-type">escalate</td>
+                <td class="param-desc">Request di luar domain sistem — ditandai untuk review atau log.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="doc-card">
+          <h3>Dataset dan training</h3>
+          <p>
+            Model dilatih pada dataset campuran:
+          </p>
+          <ul style="color: var(--muted); line-height: 1.8;">
+            <li><strong>In-domain benign prompts</strong> — prompt normal berbahasa Indonesia</li>
+            <li><strong>Prompt injection samples</strong> — diadaptasi dari benchmark publik seperti BIPIA, InjecAgent, LLMail-Inject</li>
+            <li><strong>Out-of-domain samples</strong> — input di luar distribusi domain target</li>
+          </ul>
+          <p>
+            Model di-export ke ONNX runtime untuk inference dengan latency rendah di production.
+          </p>
+        </div>
+      </section>
+
+      <!-- Quick Start Cloud API -->
+      <section class="doc-section" id="quickstart">
+        <h2>3. Quick Start — Cloud API</h2>
+        <p>
+          Cara tercepat menguji Samaryn adalah lewat cloud endpoint. Anda memerlukan API key
+          dari operator deployment.
         </p>
 
         <div class="doc-card">
@@ -489,7 +558,7 @@
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
-    "model": "kr/claude-sonnet-4.5",
+    "model": "gpt-4o-mini",
     "messages": [
       {"role": "user", "content": "Balas singkat: sistem aktif"}
     ]
@@ -510,10 +579,10 @@
 
       <!-- Authentication -->
       <section class="doc-section" id="authentication">
-        <h2>3. Authentication</h2>
+        <h2>4. Authentication</h2>
         <p>
-          All API requests require an API key sent via the
-          <span class="inline-code">Authorization</span> header.
+          Semua API request membutuhkan API key yang dikirim lewat header
+          <span class="inline-code">Authorization</span>.
         </p>
 
         <div class="doc-card">
@@ -524,29 +593,23 @@
         </div>
 
         <div class="doc-card">
-          <h3>Getting an API key</h3>
-          <p>
-            API keys are managed by your Samaryn operator. Check the
-            <a href="/dashboard" style="color:var(--cyan);">Dashboard</a>
-            or contact your deployment admin. The following endpoints are
-            public and do not require authentication:
-          </p>
+          <h3>Public endpoints</h3>
+          <p>Endpoint berikut tidak membutuhkan autentikasi:</p>
           <ul style="color: var(--muted); line-height: 1.8;">
             <li><span class="inline-code">GET /</span> — Landing page</li>
             <li><span class="inline-code">GET /demo</span> — Interactive demo</li>
-            <li><span class="inline-code">GET /docs</span> — This documentation</li>
+            <li><span class="inline-code">GET /docs</span> — Dokumentasi ini</li>
             <li><span class="inline-code">GET /health</span> — Health check</li>
           </ul>
         </div>
       </section>
 
-      <!-- Chat Completions -->
+      <!-- Chat Completions API -->
       <section class="doc-section" id="chat-completions">
-        <h2>4. Chat Completions</h2>
+        <h2>5. Chat Completions API</h2>
         <p>
-          The <span class="inline-code">/v1/chat/completions</span> endpoint
-          follows the OpenAI chat completions format. Your existing OpenAI
-          client code works by changing the base URL and API key.
+          Endpoint <span class="inline-code">/v1/chat/completions</span> mengikuti format OpenAI chat completions.
+          Sebelum request diteruskan ke LLM tujuan, request discan oleh rule engine dan IndoBERT classifier.
         </p>
 
         <div class="doc-card">
@@ -573,9 +636,8 @@
                 <td class="param-type">string</td>
                 <td class="param-req">yes</td>
                 <td class="param-desc">
-                  Model identifier. Use a route name (e.g.
-                  <span class="inline-code">kr/claude-sonnet-4.5</span>)
-                  or any model ID the upstream provider supports.
+                  Model ID LLM tujuan (e.g. <span class="inline-code">gpt-4o-mini</span>).
+                  Request discan oleh IndoBERT sebelum diforward ke model ini.
                 </td>
               </tr>
               <tr>
@@ -583,7 +645,7 @@
                 <td class="param-type">array</td>
                 <td class="param-req">yes</td>
                 <td class="param-desc">
-                  Array of message objects with <span class="inline-code">role</span>
+                  Array message objects with <span class="inline-code">role</span>
                   and <span class="inline-code">content</span>.
                 </td>
               </tr>
@@ -592,8 +654,7 @@
                 <td class="param-type">boolean</td>
                 <td class="param-req">no</td>
                 <td class="param-desc">
-                  Set to <span class="inline-code">true</span> for streaming
-                  responses via SSE. Default: <span class="inline-code">false</span>.
+                  SSE streaming. Default: <span class="inline-code">false</span>.
                 </td>
               </tr>
               <tr>
@@ -609,8 +670,7 @@
                 <td class="param-type">integer</td>
                 <td class="param-req">no</td>
                 <td class="param-desc">
-                  Maximum tokens in the response. Default and limits depend
-                  on the upstream model.
+                  Maximum tokens. Default dan limit bergantung pada upstream model.
                 </td>
               </tr>
             </tbody>
@@ -620,16 +680,15 @@
         <div class="doc-card">
           <h3>Response format</h3>
           <p>
-            The response follows the OpenAI chat completions format, with
-            additional security-related fields:
+            Response mengikuti format OpenAI chat completions, dengan tambahan field
+            <span class="inline-code">security</span> yang menunjukkan hasil scan model IndoBERT:
           </p>
           <div class="code-block">
             <pre><code>{
   "id": "chatcmpl-...",
   "object": "chat.completion",
   "created": 1234567890,
-  "model": "kr/claude-sonnet-4.5",
-  "provider": "meowlabs",
+  "model": "gpt-4o-mini",
   "choices": [{
     "index": 0,
     "message": {
@@ -652,113 +711,100 @@
 }</code></pre>
           </div>
           <p>
-            The <span class="inline-code">security</span> object shows what
-            the gateway detected and what decision was made.
+            Field <span class="inline-code">security</span> menunjukkan apa yang dideteksi oleh model IndoBERT
+            dan keputusan policy engine.
           </p>
         </div>
       </section>
 
-      <!-- Model Routing -->
-      <section class="doc-section" id="model-routing">
-        <h2>5. Model Routing</h2>
+      <!-- Self-Host Deployment -->
+      <section class="doc-section" id="selfhost">
+        <h2>6. Self-Host Deployment</h2>
         <p>
-          Samaryn can route requests to multiple upstream providers. Use the
-          <span class="inline-code">model</span> field to select the route.
+          Samaryn bisa di-deploy di infrastruktur sendiri via Docker. Model IndoBERT ONNX sudah
+          terbundle dalam image — tidak perlu download model terpisah.
         </p>
 
         <div class="doc-card">
-          <h3>Available routes</h3>
-          <p>To list all available routes:</p>
+          <h3>Prerequisites</h3>
+          <ul style="color: var(--muted); line-height: 1.8;">
+            <li>Docker &amp; Docker Compose</li>
+            <li>Server dengan CPU (minimal 4 core, 8GB RAM) — GPU tidak wajib untuk ONNX inference</li>
+            <li>API key untuk upstream LLM yang ingin diamankan</li>
+          </ul>
+        </div>
+
+        <div class="doc-card">
+          <h3>Quick start</h3>
           <div class="code-block">
-            <pre><code>curl https://samaryn.meowlabs.id/v1/models \
-  -H "Authorization: Bearer YOUR_API_KEY"</code></pre>
+            <pre><code>git clone https://github.com/Urdemonlord/samaryn.git
+cd samaryn
+cp config/default.yaml config/production.yaml
+# Edit config/production.yaml — set API keys dan endpoint
+docker compose up -d</code></pre>
           </div>
         </div>
 
         <div class="doc-card">
-          <h3>Route format</h3>
-          <p>Models are identified by route prefix and model name:</p>
-          <table class="param-table">
-            <thead>
-              <tr>
-                <th>Route</th>
-                <th>Example model</th>
-                <th>Provider</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="param-name">kr/</td>
-                <td class="param-desc">kr/claude-sonnet-4.5</td>
-                <td class="param-desc">MeowLabs Knowledge Router</td>
-              </tr>
-              <tr>
-                <td class="param-name">kr/</td>
-                <td class="param-desc">kr/deepseek-3.2</td>
-                <td class="param-desc">MeowLabs DeepSeek route</td>
-              </tr>
-              <tr>
-                <td class="param-name">kr/</td>
-                <td class="param-desc">kr/glm-5</td>
-                <td class="param-desc">MeowLabs GLM route</td>
-              </tr>
-              <tr>
-                <td class="param-name">kr/</td>
-                <td class="param-desc">kr/qwen3-coder-next</td>
-                <td class="param-desc">MeowLabs Qwen route</td>
-              </tr>
-              <tr>
-                <td class="param-name">gemini/</td>
-                <td class="param-desc">gemini/gemini-2.5-flash</td>
-                <td class="param-desc">Direct Gemini</td>
-              </tr>
-            </tbody>
-          </table>
-          <p style="margin-top: 12px;">
-            You can also pass any model ID the upstream provider supports —
-            Samaryn forwards it transparently.
+          <h3>Konfigurasi</h3>
+          <p>
+            File konfigurasi <span class="inline-code">config/default.yaml</span> berisi pengaturan untuk
+            gateway dan ml-service. Yang perlu disesuaikan:
           </p>
+          <ul style="color: var(--muted); line-height: 1.8;">
+            <li><strong>Upstream LLM API keys</strong> — untuk forwarding request setelah discan</li>
+            <li><strong>Threshold classifier</strong> — batas keputusan untuk tiap kelas</li>
+            <li><strong>Rule engine patterns</strong> — daftar pola eksplisit yang ingin dicegat</li>
+            <li><strong>Audit log destination</strong> — file atau endpoint eksternal</li>
+          </ul>
+        </div>
+
+        <div class="doc-card">
+          <h3>Arsitektur container</h3>
+          <p>Docker Compose menjalankan dua service:</p>
+          <ul style="color: var(--muted); line-height: 1.8;">
+            <li><strong>gateway</strong> — Rust binary di port 8080. Menangani routing, rule engine, dan forwarding.</li>
+            <li><strong>ml-service</strong> — Python FastAPI di port 8000. Menjalankan model IndoBERT ONNX.</li>
+          </ul>
         </div>
       </section>
 
-      <!-- Security Features -->
-      <section class="doc-section" id="security">
-        <h2>6. Security Features</h2>
+      <!-- Security Decisions -->
+      <section class="doc-section" id="decisions">
+        <h2>7. Security Decisions</h2>
         <p>
-          Every request is evaluated by Samaryn's policy engine before
-          reaching the upstream model. The result is returned in the
-          <span class="inline-code">security</span> response field.
+          Setiap request dievaluasi oleh rule engine dan IndoBERT classifier sebelum mencapai upstream model.
+          Hasil evaluasi tersedia di field <span class="inline-code">security</span> pada response.
         </p>
 
         <div class="doc-card">
           <h3>Prompt injection detection</h3>
           <p>
-            Samaryn detects attempts to override system instructions, extract
-            prompts, or manipulate the model into unsafe behavior. Injection
-            attempts are blocked before the request reaches the provider.
+            Model IndoBERT mendeteksi upaya override instruksi sistem, ekstraksi prompt,
+            dan manipulasi model ke perilaku tidak aman. Request yang terdeteksi sebagai injection
+            diblokir sebelum mencapai provider.
           </p>
           <p>
             <span class="badge badge-red">BLOCKED</span> &nbsp;
-            Requests flagged as prompt injection return a 403 with a clear
-            error message.
+            Request yang diblokir mengembalikan HTTP 403 dengan pesan error yang jelas.
           </p>
         </div>
 
         <div class="doc-card">
-          <h3>PII masking</h3>
+          <h3>Out-of-domain detection</h3>
           <p>
-            Personally identifiable information (email, phone numbers, NIK,
-            tokens, API keys) can be automatically redacted or masked from
-            requests. This is configured at the gateway level.
+            Tidak semua request mencurigakan adalah serangan. Samaryn membedakan prompt injection
+            dari request yang cuma berada di luar domain sistem. OOD request bisa dieskalasi
+            untuk review tanpa diblokir sepenuhnya.
           </p>
           <p>
-            <span class="badge badge-amber">MASKED</span> &nbsp;
-            Sensitive data is replaced with placeholders before forwarding.
+            <span class="badge badge-amber">ESCALATE</span> &nbsp;
+            Request out-of-domain diteruskan dengan status escalated dan dicatat untuk audit.
           </p>
         </div>
 
         <div class="doc-card">
-          <h3>Policy decisions</h3>
+          <h3>Policy decisions summary</h3>
           <table class="param-table">
             <thead>
               <tr>
@@ -771,108 +817,25 @@
               <tr>
                 <td class="param-name">allow</td>
                 <td class="param-type">200</td>
-                <td class="param-desc">Request passed all checks</td>
+                <td class="param-desc">Request lolos semua pemeriksaan — diteruskan ke LLM tujuan</td>
               </tr>
               <tr>
                 <td class="param-name">block</td>
                 <td class="param-type">403</td>
-                <td class="param-desc">Prompt injection detected</td>
+                <td class="param-desc">Prompt injection terdeteksi oleh model IndoBERT atau rule engine</td>
               </tr>
               <tr>
                 <td class="param-name">mask</td>
                 <td class="param-type">200</td>
-                <td class="param-desc">Allowed but PII was redacted</td>
+                <td class="param-desc">Aman tetapi PII direduksi sebelum diferuskan</td>
               </tr>
               <tr>
                 <td class="param-name">escalate</td>
                 <td class="param-type">200</td>
-                <td class="param-desc">Out-of-domain context, passed with warning</td>
+                <td class="param-desc">Out-of-domain context — diteruskan dengan peringatan</td>
               </tr>
             </tbody>
           </table>
-        </div>
-      </section>
-
-      <!-- Code Examples -->
-      <section class="doc-section" id="examples">
-        <h2>7. Code Examples</h2>
-        <p>
-          Samaryn uses the OpenAI-compatible format, so any OpenAI SDK
-          works by changing the base URL.
-        </p>
-
-        <div class="doc-card">
-          <h3>Python (openai SDK)</h3>
-          <div class="code-block">
-            <pre><code>from openai import OpenAI
-
-client = OpenAI(
-    base_url="https://samaryn.meowlabs.id/v1",
-    api_key="YOUR_API_KEY"
-)
-
-response = client.chat.completions.create(
-    model="kr/claude-sonnet-4.5",
-    messages=[{"role": "user", "content": "Balas singkat: sistem aktif"}]
-)
-
-print(response.choices[0].message.content)</code></pre>
-          </div>
-        </div>
-
-        <div class="doc-card">
-          <h3>Python (httpx — raw)</h3>
-          <div class="code-block">
-            <pre><code>import httpx
-
-response = httpx.post(
-    "https://samaryn.meowlabs.id/v1/chat/completions",
-    headers={
-        "Authorization": "Bearer YOUR_API_KEY",
-        "Content-Type": "application/json"
-    },
-    json={
-        "model": "kr/claude-sonnet-4.5",
-        "messages": [{"role": "user", "content": "Balas singkat: sistem aktif"}]
-    }
-)
-
-print(response.json()["choices"][0]["message"]["content"])</code></pre>
-          </div>
-        </div>
-
-        <div class="doc-card">
-          <h3>JavaScript (fetch)</h3>
-          <div class="code-block">
-            <pre><code>const response = await fetch("https://samaryn.meowlabs.id/v1/chat/completions", {
-  method: "POST",
-  headers: {
-    "Authorization": "Bearer YOUR_API_KEY",
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    model: "kr/claude-sonnet-4.5",
-    messages: [{ role: "user", content: "Balas singkat: sistem aktif" }]
-  })
-});
-
-const data = await response.json();
-console.log(data.choices[0].message.content);</code></pre>
-          </div>
-        </div>
-
-        <div class="doc-card">
-          <h3>cURL (streaming)</h3>
-          <div class="code-block">
-            <pre><code>curl https://samaryn.meowlabs.id/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -d '{
-    "model": "kr/claude-sonnet-4.5",
-    "messages": [{"role": "user", "content": "Hitung 1 sampai 5"}],
-    "stream": true
-  }'</code></pre>
-          </div>
         </div>
       </section>
 
@@ -880,8 +843,8 @@ console.log(data.choices[0].message.content);</code></pre>
       <section class="doc-section" id="errors">
         <h2>8. Error Handling</h2>
         <p>
-          Samaryn returns standard HTTP status codes with JSON error bodies
-          in the OpenAI error format.
+          Samaryn mengembalikan HTTP status codes standar dengan JSON error bodies
+          dalam format OpenAI error.
         </p>
 
         <div class="doc-card">
@@ -921,7 +884,7 @@ console.log(data.choices[0].message.content);</code></pre>
               <tr>
                 <td class="param-name">403</td>
                 <td class="param-type">blocked_by_security_policy</td>
-                <td class="param-desc">Request blocked by security policy (prompt injection, PII threshold)</td>
+                <td class="param-desc">Request diblokir oleh IndoBERT classifier atau rule engine</td>
               </tr>
               <tr>
                 <td class="param-name">404</td>
@@ -931,7 +894,7 @@ console.log(data.choices[0].message.content);</code></pre>
               <tr>
                 <td class="param-name">500</td>
                 <td class="param-type">upstream_error</td>
-                <td class="param-desc">Upstream provider error or gateway failure</td>
+                <td class="param-desc">Upstream LLM provider error or gateway failure</td>
               </tr>
               <tr>
                 <td class="param-name">502</td>

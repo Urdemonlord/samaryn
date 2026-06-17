@@ -1,0 +1,98 @@
+TY  - JOUR
+TI  - Benchmarking and Defending Against Indirect Prompt Injection Attacks on Large Language Models
+AU  - Yi, Jingwei
+AU  - Xie, Yueqi
+AU  - Zhu, Bin
+AU  - Kiciman, Emre
+AU  - Sun, Guangzhong
+AU  - Xie, Xing
+AU  - Wu, Fangzhao
+PY  - 2023
+Y1  - 2023/12/21
+JO  - arXiv preprint arXiv:2312.14197
+M3  - Preprint
+UR  - https://arxiv.org/abs/2312.14197
+L1  - https://arxiv.org/pdf/2312.14197
+N1  - arXiv:2312.14197
+ER  - 
+
+TY  - JOUR
+TI  - InjecAgent: Benchmarking Indirect Prompt Injections in Tool-Integrated Large Language Model Agents
+AU  - Zhan, Qiusi
+AU  - Liang, Zhixiang
+AU  - Ying, Zifan
+AU  - Kang, Daniel
+PY  - 2024
+Y1  - 2024/03/05
+JO  - arXiv preprint arXiv:2403.02691
+M3  - Preprint
+UR  - https://arxiv.org/abs/2403.02691
+L1  - https://arxiv.org/pdf/2403.02691
+N1  - arXiv:2403.02691
+ER  - 
+
+TY  - JOUR
+TI  - LLMail-Inject: A Dataset from a Realistic Adaptive Prompt Injection Challenge
+AU  - Abdelnabi, Sahar
+AU  - Fay, Aideen
+AU  - Salem, Ahmed
+AU  - Zverev, Egor
+AU  - Liao, Kai-Chieh
+AU  - Liu, Chi-Huang
+AU  - Kuo, Chun-Chih
+AU  - Weigend, Jannis
+AU  - Manlangit, Danyael
+AU  - Apostolov, Alex
+AU  - Umair, Haris
+AU  - Donato, Joao
+AU  - Kawakita, Masayuki
+AU  - Mahboob, Athar
+AU  - Bach, Tran Huu
+AU  - Chiang, Tsun-Han
+AU  - Cho, Myeongjin
+AU  - Choi, Hajin
+AU  - Kim, Byeonghyeon
+AU  - Lee, Hyeonjin
+AU  - Pannell, Benjamin
+AU  - McCauley, Conor
+AU  - Russinovich, Mark
+AU  - Paverd, Andrew
+AU  - Cherubin, Giovanni
+PY  - 2025
+Y1  - 2025/06/11
+JO  - arXiv preprint arXiv:2506.09956
+M3  - Preprint
+UR  - https://arxiv.org/abs/2506.09956
+L1  - https://arxiv.org/pdf/2506.09956
+N1  - arXiv:2506.09956
+ER  - 
+
+TY  - JOUR
+TI  - MPIB: A Benchmark for Medical Prompt Injection Attacks and Clinical Safety in LLMs
+AU  - Lee, Junhyeok
+AU  - Jang, Han
+AU  - Choi, Kyu Sung
+PY  - 2026
+Y1  - 2026/02/06
+JO  - arXiv preprint arXiv:2602.06268
+M3  - Preprint
+UR  - https://arxiv.org/abs/2602.06268
+L1  - https://arxiv.org/pdf/2602.06268
+N1  - arXiv:2602.06268
+ER  - 
+
+TY  - JOUR
+TI  - Formalizing and Benchmarking Prompt Injection Attacks and Defenses
+AU  - Liu, Yupei
+AU  - Jia, Yuqi
+AU  - Geng, Runpeng
+AU  - Jia, Jinyuan
+AU  - Gong, Neil Zhenqiang
+PY  - 2023
+Y1  - 2023/10/19
+JO  - arXiv preprint arXiv:2310.12815
+M3  - Preprint
+UR  - https://arxiv.org/abs/2310.12815
+L1  - https://arxiv.org/pdf/2310.12815
+N1  - arXiv:2310.12815
+ER  - 

@@ -51,7 +51,10 @@ class PromptInjectionDetector:
                 "pattern": re.compile(
                     r"(?:ignore|forget|disregard|override|bypass|skip)\s+"
                     r"(?:all\s+)?(?:previous|prior|above|earlier|your|the|system)\s+"
-                    r"(?:instructions?|rules?|directives?|guidelines?|prompts?|constraints?)",
+                    r"(?:instructions?|rules?|directives?|guidelines?|prompts?|constraints?)"
+                    r"|(?:abaikan|lupakan|hiraukan|lewati)\s+"
+                    r"(?:semua\s+)?(?:instruksi|aturan|arahan|panduan)\s+"
+                    r"(?:sebelumnya|sebelum\s+ini|prior)",
                     re.IGNORECASE,
                 ),
                 "severity": "critical",
@@ -61,7 +64,10 @@ class PromptInjectionDetector:
                 "pattern": re.compile(
                     r"(?:reveal|show|tell\s+me|display|print|output|repeat|echo)\s+"
                     r"(?:your\s+)?(?:the\s+)?(?:system\s+)?(?:original\s+)?"
-                    r"(?:prompt|instructions?|configuration|rules|directive|system\s+message)",
+                    r"(?:prompt|instructions?|configuration|rules|directive|system\s+message)"
+                    r"|(?:tampilkan|bocorkan|ungkapkan|perlihatkan)\s+"
+                    r"(?:system\s+prompt|prompt\s+internal|instruksi\s+internal|"
+                    r"konfigurasi\s+internal|secret\s+key|kunci\s+rahasia)",
                     re.IGNORECASE,
                 ),
                 "severity": "high",

@@ -6,7 +6,7 @@
     <title>Samaryn • AI Security Gateway</title>
     <meta
       name="description"
-      content="Samaryn melindungi traffic LLM dengan prompt injection detection, PII masking, dan gateway OpenAI-compatible yang siap dipakai di production."
+      content="Samaryn adalah model deteksi out-of-domain prompt injection berbasis IndoBERT untuk Bahasa Indonesia. Cloud API atau self-host."
     />
     <style>
       :root {
@@ -705,29 +705,30 @@
       <section class="hero">
         <div class="hero-grid">
           <div class="hero-copy">
-            <div class="hero-kicker">Prompt injection detection &amp; PII masking untuk traffic LLM</div>
-            <h1>Guardrail AI yang bekerja sebelum request mencapai model</h1>
+            <div class="hero-kicker">Deteksi out-of-domain prompt injection berbasis IndoBERT</div>
+            <h1>Model keamanan yang menangkap prompt injection dalam Bahasa Indonesia</h1>
             <p>
-              Samaryn menginspeksi, memfilter, dan merutekan traffic LLM lewat satu endpoint.
-              Prompt injection dicegat, data sensitif dimasking, dan aplikasi tetap bisa
-              menggunakan provider mana pun tanpa perubahan kode.
+              Samaryn adalah model IndoBERT yang dilatih untuk mengklasifikasi request LLM ke dalam
+              tiga kelas — <strong>safe</strong>, <strong>prompt injection</strong>, dan
+              <strong>out-of-domain</strong>. Di-deploy sebagai gateway OpenAI-compatible
+              yang siap dipakai via cloud atau di-self-host di infrastruktur sendiri.
             </p>
             <div class="hero-actions">
-              <a class="button" href="/demo">Lihat demo live</a>
-              <a class="button-ghost" href="#api">Lihat endpoint</a>
+              <a class="button" href="/demo">Coba model langsung</a>
+              <a class="button-ghost" href="/docs">Dokumentasi integrasi</a>
             </div>
             <div class="hero-points" aria-label="Keunggulan utama">
-              <span>Rust gateway dengan latency rendah</span>
-              <span>Scanner hybrid untuk Bahasa Indonesia</span>
-              <span>Drop-in untuk client OpenAI-compatible</span>
+              <span>IndoBERT fine-tuned untuk Bahasa Indonesia</span>
+              <span>Tiga kelas keputusan: safe, injection, OOD</span>
+              <span>Cloud API + self-host deployment</span>
             </div>
           </div>
 
           <div class="hero-visual" aria-label="Preview demo Samaryn">
             <div class="visual-header">
               <div class="visual-title">
-                <strong>Interactive gateway preview</strong>
-                <span>Demo asli dari route Samaryn. Bukan mockup statis.</span>
+                <strong>Uji model langsung dari halaman ini</strong>
+                <span>Request dikirim ke model Samaryn — bukan mockup statis.</span>
               </div>
               <div class="status-chip">Gateway online</div>
             </div>
@@ -736,16 +737,16 @@
             </div>
             <div class="metrics">
               <div class="metric">
-                <strong>Block</strong>
-                <span>Prompt override, jailbreak, dan pola injeksi dapat dihentikan sebelum diteruskan.</span>
+                <strong>Detect</strong>
+                <span>Prompt injection dan pola berbahaya dikenali oleh model IndoBERT sebelum mencapai LLM tujuan.</span>
               </div>
               <div class="metric">
-                <strong>Mask</strong>
-                <span>Email, nomor telepon, NIK, dan pola sensitif lain bisa dibersihkan di jalur request.</span>
+                <strong>Classify</strong>
+                <span>Setiap request dinilai dalam tiga kelas: safe, injection, atau out-of-domain — bukan sekadar binary block.</span>
               </div>
               <div class="metric">
-                <strong>Route</strong>
-                <span>Traffic tetap masuk lewat satu endpoint yang kompatibel dengan alur OpenAI.</span>
+                <strong>Decide</strong>
+                <span>Policy engine menentukan tindakan: allow, block, mask, atau escalate — berdasarkan hasil klasifikasi model.</span>
               </div>
             </div>
           </div>
@@ -754,57 +755,58 @@
 
       <section id="fitur">
         <div class="section-head">
-          <h2>Proteksi di jalur request, bukan janji di halaman depan</h2>
+          <h2>Model IndoBERT sebagai engine deteksi utama</h2>
           <p>
-            Samaryn memeriksa setiap request sebelum diteruskan ke model. Policy engine menentukan apakah request diizinkan, dimasking, atau dihentikan — tanpa menambah kompleksitas ke aplikasi Anda.
+            Samaryn menggunakan IndoBERT — varian BERT yang di-pre-train untuk Bahasa Indonesia — sebagai classifier tiga kelas.
+            Setiap request dinilai sebelum diteruskan ke LLM, dengan hybrid pipeline yang menggabungkan rule engine, model, dan escalation layer.
           </p>
         </div>
         <div class="feature-grid">
           <article class="feature large">
-            <h3>Policy engine yang memutuskan sebelum model dipanggil</h3>
+            <h3>IndoBERT fine-tuned untuk deteksi prompt injection</h3>
             <p>
-              Setiap request diperiksa lebih dulu. Jika pola prompt injection atau data sensitif terdeteksi, gateway bisa block, redact, atau warn sesuai policy.
+              Model dilatih pada dataset campuran: prompt normal berbahasa Indonesia, sampel injection dari benchmark publik (BIPIA, InjecAgent, LLMail-Inject), dan sampel out-of-domain. Output berupa probabilitas tiga kelas.
             </p>
             <ul>
-              <li>Rule-based scan untuk pola eksplisit dan serangan yang sudah dikenal</li>
-              <li>ML service terpisah untuk klasifikasi tambahan dan fallback keamanan</li>
-              <li>Audit trail terstruktur agar keputusan mudah dilacak</li>
+              <li>Fine-tuning IndoBERT untuk klasifikasi safe / injection / OOD</li>
+              <li>Inference via ONNX runtime untuk latency rendah</li>
+              <li>Threshold tuning untuk menyeimbangkan false positive dan false negative</li>
             </ul>
           </article>
 
           <article class="feature small">
-            <h3>Drop-in untuk aplikasi yang sudah pakai API OpenAI</h3>
+            <h3>Tiga kelas keputusan, bukan sekadar blocklist</h3>
             <p>
-              Endpoint tetap familiar. Kamu tinggal ganti base URL lalu route ke provider yang diinginkan dari gateway yang sama.
+              Kebanyakan detector cuma binary: safe atau block. Samaryn membedakan prompt injection berbahaya dari request yang cuma berada di luar domain — dua situasi yang butuh penanganan berbeda.
             </p>
             <ul>
-              <li>Support OpenAI-compatible request flow</li>
-              <li>Bisa route ke OpenAI, Anthropic, Gemini, atau OpenRouter</li>
-              <li>Cocok untuk self-hosting di VPS dan container</li>
+              <li><strong>Safe</strong> → allow dan forward ke LLM</li>
+              <li><strong>Prompt injection</strong> → block sebelum mencapai model</li>
+              <li><strong>Out-of-domain</strong> → escalate untuk review atau log</li>
             </ul>
           </article>
 
           <article class="feature small">
-            <h3>Bahasa Indonesia bukan afterthought</h3>
+            <h3>Hybrid pipeline: rule engine + model + escalation</h3>
             <p>
-              Positioning Samaryn kuat untuk use case lokal yang sering luput saat hanya mengandalkan filter bahasa Inggris.
+              Model tidak bekerja sendirian. Rule engine menangkap pola eksplisit dengan latency hampir nol, model menangani kasus yang lebih kompleks, dan escalation layer menangani ambiguitas.
             </p>
             <ul>
-              <li>Prompt dan contoh demo sudah pakai Bahasa Indonesia</li>
-              <li>PII masking relevan untuk format data lokal</li>
-              <li>Roadmap hybrid scan diarahkan ke akurasi konteks Indonesia</li>
+              <li>Hard rules untuk override, exfiltration, intent ofensif</li>
+              <li>IndoBERT ONNX classifier sebagai fallback tiga kelas</li>
+              <li>Escalation path untuk request yang tidak jelas aman atau berbahaya</li>
             </ul>
           </article>
 
           <article class="feature large">
-            <h3>Operational shape yang realistis buat production</h3>
+            <h3>Cloud API atau self-host di infrastruktur sendiri</h3>
             <p>
-              Arsitektur dipisah jelas antara gateway dan scanner. Ini memudahkan scaling, restart service, dan observability di lingkungan server yang sederhana.
+              Samaryn bisa dipakai sebagai cloud endpoint atau di-deploy sendiri via Docker. Model IndoBERT sudah included dalam image — tinggal jalankan dan hubungkan ke LLM atau chatbot yang ingin diamankan.
             </p>
             <ul>
-              <li>Gateway Rust untuk path utama dan streaming</li>
-              <li>ML service Python untuk scan yang lebih berat</li>
-              <li>Docker Compose ready untuk deployment cepat</li>
+              <li>Cloud: satu endpoint OpenAI-compatible, tinggal ganti base URL</li>
+              <li>Self-host: Docker Compose, model ONNX sudah terbundle</li>
+              <li>Cocok untuk tim yang butuh kontrol data dan compliance</li>
             </ul>
           </article>
         </div>
@@ -812,80 +814,81 @@
 
       <section id="alur">
         <div class="section-head">
-          <h2>Alur request yang mudah dipahami tim engineering</h2>
+          <h2>Alur deteksi: dari request ke keputusan</h2>
           <p>
-            Tujuannya sederhana. Semua traffic masuk ke satu titik, diperiksa, lalu diteruskan ke provider bila lolos policy.
+            Setiap request melewati pipeline tiga lapis — rule engine, IndoBERT classifier, dan policy decision — sebelum diteruskan ke LLM tujuan. Hasilnya adalah keputusan yang bisa diaudit.
           </p>
         </div>
         <div class="flow-grid">
           <article class="flow-step">
             <span class="step-number">01</span>
-            <h3>Ingress tunggal</h3>
-            <p>Aplikasi mengirim request ke Samaryn dengan format yang tetap familiar bagi client OpenAI-compatible.</p>
+            <h3>Request masuk</h3>
+            <p>Aplikasi mengirim request dalam format OpenAI-compatible ke endpoint Samaryn, menyertakan model LLM yang ingin dipakai dan prompt pengguna.</p>
           </article>
           <article class="flow-step">
             <span class="step-number">02</span>
-            <h3>Security scan</h3>
-            <p>Gateway menjalankan rules engine, PII detection, lalu meminta klasifikasi tambahan ke ML service bila dibutuhkan.</p>
+            <h3>Rule engine</h3>
+            <p>Pola eksplisit diperiksa lebih dulu: override, exfiltration, intent ofensif, dan marker injection dikenal. Jika cocok, request langsung diblok tanpa panggil model.</p>
           </article>
           <article class="flow-step">
             <span class="step-number">03</span>
-            <h3>Decision</h3>
-            <p>Policy menentukan apakah request diizinkan, dimasking, atau dihentikan sebelum mencapai upstream model.</p>
+            <h3>IndoBERT classifier</h3>
+            <p>Jika lolos rule engine, request dikirim ke model IndoBERT ONNX untuk klasifikasi tiga kelas: safe, prompt injection, atau out-of-domain.</p>
           </article>
           <article class="flow-step">
             <span class="step-number">04</span>
-            <h3>Forward + audit</h3>
-            <p>Request yang lolos diteruskan ke provider pilihan dan keputusan dicatat untuk observability.</p>
+            <h3>Decision + forward</h3>
+            <p>Berdasarkan output model: safe → forward ke LLM, injection → block 403, OOD → escalate. Semua keputusan dicatat untuk audit trail.</p>
           </article>
         </div>
       </section>
 
       <section id="roadmap">
         <div class="section-head">
-          <h2>Roadmap produk dari foundation ke enterprise</h2>
+          <h2>Roadmap pengembangan model dan gateway</h2>
           <p>
-            Setiap versi Samaryn dibangun dengan milestone yang jelas. Dari core gateway hingga enterprise policy engine — semuanya mengacu pada PRD yang sudah terdefinisi.
+            Dari fine-tuning IndoBERT pertama hingga enterprise policy engine — setiap milestone dibangun untuk memperkuat deteksi prompt injection Bahasa Indonesia.
           </p>
         </div>
         <div class="roadmap-grid">
           <article class="roadmap-card">
             <strong>v0.1 Foundation</strong>
-            <h3>Core gateway yang sudah fokus ke jalur request</h3>
+            <h3>Model BERT dan core gateway</h3>
             <ul>
-              <li>OpenAI-compatible proxy</li>
-              <li>PII masking untuk email, phone, token, dan data sensitif</li>
-              <li>Basic prompt injection detection</li>
-              <li>Audit logging dan deploy via Docker</li>
+              <li>Fine-tuning IndoBERT untuk tiga kelas</li>
+              <li>ONNX export dan inference runtime</li>
+              <li>Rule engine untuk pola eksplisit</li>
+              <li>OpenAI-compatible proxy basic</li>
             </ul>
           </article>
           <article class="roadmap-card">
             <strong>v0.2 Current</strong>
-            <h3>Lapisan operasional untuk tim yang mulai scale</h3>
+            <h3>Hybrid pipeline production-ready</h3>
             <ul>
-              <li>Web dashboard</li>
-              <li>Analytics dan usage metrics</li>
-              <li>Rule editor UI</li>
-              <li>Provider fallback</li>
+              <li>IndoBERT ONNX terintegrasi di ml-service</li>
+              <li>Dataset campuran: benchmark + data Indonesia</li>
+              <li>Web dashboard dan analytics</li>
+              <li>Self-host deployment via Docker</li>
             </ul>
           </article>
           <article class="roadmap-card">
             <strong>v0.3</strong>
-            <h3>Kontrol runtime yang lebih agresif untuk agentic flow</h3>
+            <h3>Fine-tuning pipeline dan dataset</h3>
             <ul>
-              <li>Realtime stream filtering</li>
-              <li>AI agent sandbox</li>
-              <li>Tool permission system</li>
+              <li>Pipeline fine-tuning berulang</li>
+              <li>Dataset Indonesia diperluas</li>
+              <li>Evaluasi benchmark publik</li>
+              <li>Threshold tuning interaktif</li>
             </ul>
           </article>
           <article class="roadmap-card">
             <strong>v1.0</strong>
-            <h3>Enterprise policy engine untuk deployment serius</h3>
+            <h3>Enterprise dan kustomisasi</h3>
             <ul>
-              <li>Enterprise policy engine</li>
+              <li>Custom BERT training untuk domain spesifik</li>
+              <li>Compliance mode (HIPAA, SOC2)</li>
               <li>Distributed deployment</li>
-              <li>Compliance mode seperti HIPAA dan SOC2</li>
-              <li>Advanced observability</li>
+              <li>Advanced observability dan audit</li>
             </ul>
           </article>
         </div>
@@ -893,14 +896,15 @@
 
       <section id="api">
         <div class="section-head">
-          <h2>Endpoint inti yang siap diintegrasikan</h2>
+          <h2>Integrasi: cloud API atau self-host</h2>
           <p>
-            Semua entry point Samaryn bisa langsung diuji dari environment yang sama. Cocok untuk eksplorasi teknis maupun integrasi production.
+            Samaryn bisa dipakai sebagai cloud endpoint atau dijalankan sendiri. Model deteksi yang sama — bedanya cuma di mana infra berjalan.
           </p>
         </div>
         <div class="ops-grid">
           <article class="code-card" aria-label="Contoh request curl">
-            <pre><code>curl https://samaryn.meowlabs.id/v1/chat/completions \
+            <pre><code># Cloud: kirim request, model IndoBERT scan sebelum forward
+curl https://samaryn.meowlabs.id/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer &lt;API_KEY&gt;" \
   -d '{
@@ -908,26 +912,29 @@
     "messages": [
       {"role": "user", "content": "Balas singkat: sistem aktif"}
     ]
-  }'</code></pre>
+  }'
+
+# Response includes security decisions:
+# "security": {"injection_detected": false, "decision": "allow"}</code></pre>
           </article>
 
           <aside class="summary-card">
             <div class="summary-list">
               <div class="summary-item">
                 <strong>GET /</strong>
-                <span>Landing page ini untuk positioning, docs singkat, dan jalur masuk ke demo live.</span>
+                <span>Landing page dan dokumentasi produk.</span>
               </div>
               <div class="summary-item">
                 <strong>GET /demo</strong>
-                <span>Interactive preview untuk melihat keputusan gateway terhadap beberapa skenario nyata.</span>
+                <span>Uji model Samaryn langsung: safe prompt, injection, dan OOD scenario.</span>
               </div>
               <div class="summary-item">
-                <strong>GET /health</strong>
-                <span>Health probe sederhana untuk verifikasi service dan wiring deployment.</span>
+                <strong>GET /docs</strong>
+                <span>Dokumentasi integrasi cloud dan self-host.</span>
               </div>
               <div class="summary-item">
                 <strong>POST /v1/chat/completions</strong>
-                <span>Endpoint utama untuk integrasi aplikasi yang ingin tetap memakai alur OpenAI-compatible.</span>
+                <span>Endpoint utama — request discan oleh IndoBERT, lalu diforward ke LLM tujuan jika aman.</span>
               </div>
             </div>
           </aside>
@@ -935,9 +942,9 @@
 
         <div class="cta-band">
           <div>
-            <h3>Lihat bagaimana Samaryn menangani berbagai skenario</h3>
+            <h3>Coba model Samaryn langsung</h3>
             <p>
-              Coba demo live untuk melihat perbandingan request aman, prompt injection, dan skenario out-of-domain dalam satu gateway.
+              Kirim safe prompt, prompt injection, atau out-of-domain request dan lihat bagaimana model mengklasifikasi serta bagaimana gateway merespon.
             </p>
           </div>
           <a class="button" href="/demo">Buka demo</a>
@@ -947,7 +954,7 @@
 
     <footer class="shell">
       <div class="footer-line">
-        Samaryn by Meow Labs — AI Security Gateway untuk tim yang butuh kontrol penuh di jalur request LLM.
+        Samaryn by Meow Labs — Deteksi out-of-domain prompt injection berbasis IndoBERT untuk Bahasa Indonesia. <a href="/docs" style="color: var(--accent);">Dokumentasi integrasi</a> • <a href="https://github.com/Urdemonlord/samaryn" style="color: var(--accent);" target="_blank" rel="noreferrer">GitHub</a>
       </div>
     </footer>
   </body>
