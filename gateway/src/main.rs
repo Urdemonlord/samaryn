@@ -129,6 +129,7 @@ async fn main() {
         )
         .route("/dashboard", get(routes::dashboard::dashboard_page))
         .route("/demo", get(routes::demo::demo_page))
+        .route("/docs", get(routes::docs::docs_page))
         .route("/health", get(routes::health::health_check))
         // Fallback 404
         .fallback(fallback_handler)
@@ -189,7 +190,7 @@ async fn fallback_handler() -> (axum::http::StatusCode, Json<serde_json::Value>)
         axum::http::StatusCode::NOT_FOUND,
         Json(serde_json::json!({
             "error": {
-                "message": "Not found. Available endpoints: GET /, GET /demo, GET /dashboard, GET /api/dashboard/{summary,traffic,models,security,events}, POST /v1/chat/completions, GET /health",
+                "message": "Not found. Available endpoints: GET /, GET /demo, GET /docs, GET /dashboard, GET /api/dashboard/{summary,traffic,models,security,events}, POST /v1/chat/completions, GET /health",
                 "type": "not_found_error",
                 "code": "404"
             }

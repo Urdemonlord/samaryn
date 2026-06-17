@@ -693,6 +693,8 @@
           <a class="nav-link" href="#alur">Alur</a>
           <a class="nav-link" href="#roadmap">Roadmap</a>
           <a class="nav-link" href="#api">API</a>
+          <a class="nav-link" href="/docs">Docs</a>
+          <a class="nav-link" href="/dashboard">Dashboard</a>
           <a class="nav-link" href="/health">Health</a>
           <a class="nav-link" href="https://github.com/Urdemonlord/samaryn" target="_blank" rel="noreferrer">GitHub</a>
         </nav>
@@ -703,11 +705,12 @@
       <section class="hero">
         <div class="hero-grid">
           <div class="hero-copy">
-            <div class="hero-kicker">Prompt injection detection + PII masking untuk traffic LLM</div>
-            <h1>Security layer untuk aplikasi AI dan LLM</h1>
+            <div class="hero-kicker">Prompt injection detection &amp; PII masking untuk traffic LLM</div>
+            <h1>Guardrail AI yang bekerja sebelum request mencapai model</h1>
             <p>
-              Samaryn melindungi request sebelum mencapai model dengan policy engine, scan hybrid,
-              dan gateway OpenAI-compatible yang siap dipakai di production.
+              Samaryn menginspeksi, memfilter, dan merutekan traffic LLM lewat satu endpoint.
+              Prompt injection dicegat, data sensitif dimasking, dan aplikasi tetap bisa
+              menggunakan provider mana pun tanpa perubahan kode.
             </p>
             <div class="hero-actions">
               <a class="button" href="/demo">Lihat demo live</a>
@@ -751,9 +754,9 @@
 
       <section id="fitur">
         <div class="section-head">
-          <h2>Fokus ke proteksi, bukan kosmetik dashboard</h2>
+          <h2>Proteksi di jalur request, bukan janji di halaman depan</h2>
           <p>
-            Samaryn dirancang untuk tim yang butuh guardrail nyata di jalur request LLM. Surface kecil, keputusan jelas, dan integrasi tetap sederhana.
+            Samaryn memeriksa setiap request sebelum diteruskan ke model. Policy engine menentukan apakah request diizinkan, dimasking, atau dihentikan — tanpa menambah kompleksitas ke aplikasi Anda.
           </p>
         </div>
         <div class="feature-grid">
@@ -840,9 +843,9 @@
 
       <section id="roadmap">
         <div class="section-head">
-          <h2>Roadmap produk mengikuti PRD, bukan sekadar splash page</h2>
+          <h2>Roadmap produk dari foundation ke enterprise</h2>
           <p>
-            PRD Samaryn memang punya milestone versi yang jelas. Jadi landing page ini sekarang ikut memantulkan arah produk dari MVP sampai enterprise path.
+            Setiap versi Samaryn dibangun dengan milestone yang jelas. Dari core gateway hingga enterprise policy engine — semuanya mengacu pada PRD yang sudah terdefinisi.
           </p>
         </div>
         <div class="roadmap-grid">
@@ -890,9 +893,9 @@
 
       <section id="api">
         <div class="section-head">
-          <h2>Endpoint inti yang langsung bisa diuji</h2>
+          <h2>Endpoint inti yang siap diintegrasikan</h2>
           <p>
-            Landing page ini sengaja dekat ke realitas operasional. Tidak ada CTA kosong. Semua entry point utama bisa dicoba dari environment yang sama.
+            Semua entry point Samaryn bisa langsung diuji dari environment yang sama. Cocok untuk eksplorasi teknis maupun integrasi production.
           </p>
         </div>
         <div class="ops-grid">
@@ -932,9 +935,9 @@
 
         <div class="cta-band">
           <div>
-            <h3>Butuh bukti cepat, bukan janji marketing?</h3>
+            <h3>Lihat bagaimana Samaryn menangani berbagai skenario</h3>
             <p>
-              Buka demo live untuk melihat request aman, injeksi langsung, dan skenario out-of-domain lewat gateway yang sama.
+              Coba demo live untuk melihat perbandingan request aman, prompt injection, dan skenario out-of-domain dalam satu gateway.
             </p>
           </div>
           <a class="button" href="/demo">Buka demo</a>
@@ -944,7 +947,7 @@
 
     <footer class="shell">
       <div class="footer-line">
-        Samaryn by Meow Labs. Built for AI teams yang butuh kontrol di jalur request, bukan sekadar wrapper ke provider.
+        Samaryn by Meow Labs — AI Security Gateway untuk tim yang butuh kontrol penuh di jalur request LLM.
       </div>
     </footer>
   </body>
