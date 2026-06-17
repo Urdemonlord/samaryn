@@ -74,8 +74,12 @@ run_gateway() {
   gemini_key="$(get_current_env_value "$GATEWAY_CONTAINER" GEMINI_API_KEY || true)"
   openrouter_key="$(get_current_env_value "$GATEWAY_CONTAINER" OPENROUTER_API_KEY || true)"
   samaryn_auth_key="$(get_current_env_value "$GATEWAY_CONTAINER" SAMARYN__AUTH_KEYS || true)"
+  # Strip surrounding literal quotes from docker inspect (finger-quoted values)
+  samaryn_auth_key="${samaryn_auth_key%\"}"; samaryn_auth_key="${samaryn_auth_key#\"}"
   # SAMARYN__AUTH_KEYS from workflow env overrides old container value
   samaryn_auth_key="${SAMARYN__AUTH_KEYS:-$samaryn_auth_key}"
+  # Strip again in case ssh env also has quotes
+  samaryn_auth_key="${samaryn_auth_key%\"}"; samaryn_auth_key="${samaryn_auth_key#\"}"
 
   [ -z "$meowlabs_key" ] && meowlabs_key="${MEOWLABS_API_KEY:-}"
   [ -z "$openai_key" ] && openai_key="${OPENAI_API_KEY:-}"
