@@ -26,8 +26,11 @@ pub async fn auth_middleware(
         return next.run(request).await;
     }
 
-    // Skip auth for public landing/demo/health endpoints
-    if matches!(request.uri().path(), "/" | "/demo" | "/health") {
+    // Skip auth for public landing/docs/demo/health endpoints
+    if matches!(
+        request.uri().path(),
+        "/" | "/docs" | "/demo" | "/health"
+    ) {
         return next.run(request).await;
     }
 

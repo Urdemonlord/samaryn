@@ -268,6 +268,16 @@ pub fn load_config() -> AppConfig {
         provider.api_key = resolve_env_var(&provider.api_key);
     }
 
+    // Resolve auth_keys env vars and filter empty entries
+    // If SAMARYN_AUTH_KEY is not set, the YAML entry resolves to ""
+    // and should be removed so auth remains disabled
+    config.auth_keys = config
+        .auth_keys
+        .into_iter()
+        .map(|k| resolve_env_var(&k))
+        .filter(|k| !k.is_empty())
+        .collect();
+
     config
 }
 
@@ -358,6 +368,15 @@ fn apply_env_overrides(config: &mut AppConfig) {
         } else {
             Some(val)
         };
+    }
+
+    // Override auth_keys from environment (comma-separated)
+    if let Ok(val) = env::var("SAMARYN__AUTH_KEYS") {
+        config.auth_keys = val
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect();
     }
 }
 
