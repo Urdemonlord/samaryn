@@ -74,12 +74,24 @@ run_gateway() {
   gemini_key="$(get_current_env_value "$GATEWAY_CONTAINER" GEMINI_API_KEY || true)"
   openrouter_key="$(get_current_env_value "$GATEWAY_CONTAINER" OPENROUTER_API_KEY || true)"
   samaryn_auth_key="$(get_current_env_value "$GATEWAY_CONTAINER" SAMARYN__AUTH_KEYS || true)"
-  # Strip surrounding literal quotes from docker inspect (finger-quoted values)
-  samaryn_auth_key="${samaryn_auth_key%\"}"; samaryn_auth_key="${samaryn_auth_key#\"}"
+
+  # Strip surrounding literal quotes carried over from docker inspect
+  for var in meowlabs_key openai_key anthropic_key gemini_key openrouter_key samaryn_auth_key; do
+    case "$var" in
+      meowlabs_key) tmp="$meowlabs_key" ;; openai_key) tmp="$openai_key" ;;
+      anthropic_key) tmp="$anthropic_key" ;; gemini_key) tmp="$gemini_key" ;;
+      openrouter_key) tmp="$openrouter_key" ;; samaryn_auth_key) tmp="$samaryn_auth_key" ;;
+    esac
+    tmp="${tmp%\"}"; tmp="${tmp#\"}"
+    case "$var" in
+      meowlabs_key) meowlabs_key="$tmp" ;; openai_key) openai_key="$tmp" ;;
+      anthropic_key) anthropic_key="$tmp" ;; gemini_key) gemini_key="$tmp" ;;
+      openrouter_key) openrouter_key="$tmp" ;; samaryn_auth_key) samaryn_auth_key="$tmp" ;;
+    esac
+  done
+
   # SAMARYN__AUTH_KEYS from workflow env overrides old container value
   samaryn_auth_key="${SAMARYN__AUTH_KEYS:-$samaryn_auth_key}"
-  # Strip again in case ssh env also has quotes
-  samaryn_auth_key="${samaryn_auth_key%\"}"; samaryn_auth_key="${samaryn_auth_key#\"}"
 
   [ -z "$meowlabs_key" ] && meowlabs_key="${MEOWLABS_API_KEY:-}"
   [ -z "$openai_key" ] && openai_key="${OPENAI_API_KEY:-}"
