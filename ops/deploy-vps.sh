@@ -73,14 +73,14 @@ run_gateway() {
   anthropic_key="$(get_current_env_value "$GATEWAY_CONTAINER" ANTHROPIC_API_KEY || true)"
   gemini_key="$(get_current_env_value "$GATEWAY_CONTAINER" GEMINI_API_KEY || true)"
   openrouter_key="$(get_current_env_value "$GATEWAY_CONTAINER" OPENROUTER_API_KEY || true)"
-  samaryn_auth_key="$(get_current_env_value "$GATEWAY_CONTAINER" SAMARYN_AUTH_KEY || true)"
+  samaryn_auth_key="$(get_current_env_value "$GATEWAY_CONTAINER" SAMARYN__AUTH_KEYS || true)"
 
   [ -z "$meowlabs_key" ] && meowlabs_key="${MEOWLABS_API_KEY:-}"
   [ -z "$openai_key" ] && openai_key="${OPENAI_API_KEY:-}"
   [ -z "$anthropic_key" ] && anthropic_key="${ANTHROPIC_API_KEY:-}"
   [ -z "$gemini_key" ] && gemini_key="${GEMINI_API_KEY:-}"
   [ -z "$openrouter_key" ] && openrouter_key="${OPENROUTER_API_KEY:-}"
-  [ -z "$samaryn_auth_key" ] && samaryn_auth_key="${SAMARYN_AUTH_KEY:-}"
+  [ -z "$samaryn_auth_key" ] && samaryn_auth_key="${SAMARYN__AUTH_KEYS:-}"
 
   docker rm -f "$GATEWAY_CONTAINER" >/dev/null 2>&1 || true
 
