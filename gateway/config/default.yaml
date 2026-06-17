@@ -110,6 +110,15 @@ security:
         type: credit_card
 
 # -----------------------------------------------------------------------------
+# API Key Authentication
+# Set one or more keys to enable authentication. All non-public endpoints
+# will require Authorization: Bearer <key>. Leave empty to disable auth.
+# Supports env var reference: ${SAMARYN_AUTH_KEY}
+# -----------------------------------------------------------------------------
+auth_keys:
+  - "${SAMARYN_AUTH_KEY}"
+
+# -----------------------------------------------------------------------------
 # Logging
 # -----------------------------------------------------------------------------
 logging:
